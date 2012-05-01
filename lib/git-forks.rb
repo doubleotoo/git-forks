@@ -170,7 +170,7 @@ class GitForks
         puts
         print "This is your current forks whitelist: "
         if (f = config_get_forks).size > 0
-          puts f.gsub("\n", ', ')
+          puts f.join(', ')
         else
           puts "<empty>"
         end
@@ -187,7 +187,7 @@ class GitForks
     forks = get_cached_data('forks')
     forks.reverse! if @args.shift == '--reverse'
 
-    whitelist = config_get_forks.split("\n")
+    whitelist = config_get_forks
 
     output = forks.collect do |f|
       owner = f['owner']['login']
@@ -357,6 +357,22 @@ class GitForks
     forks = Octokit.forks("#{@user}/#{@repo}").select {|f|
       targets.empty? or targets.include?(f.owner.login)
     }
+
+    unless targets.empty?
+      owners = forks.collect {|f| f['owner']['login'] }
+      if not (dne = targets - owners).empty?
+        dne.each do |owner|
+          puts "WARNING: #{owner}/#{@repo} does not exist."
+          # `git forks fetch <dne>` will report <dne>
+          # as not being in the forks whitelist. It is
+          # in the list, but it doesn't exist in GitHub.
+          #
+          # Hopefully, this WARNING message will help.
+        end
+      end
+    end
+
+    forks
   end
 
   def fetch_fork_branches(fork_user)
@@ -453,7 +469,7 @@ class GitForks
   end
 
   def config_get_forks
-    git("config --get-all github.forks.owner")
+    git("config --get-all github.forks.owner").split("\n")
   end
 
   def config_get_fork(owner)
