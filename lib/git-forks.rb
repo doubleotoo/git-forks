@@ -1,9 +1,11 @@
+# JSON is used to cache GitHub API response data.
+require 'json'
+# Launchy is used in 'browse' to open a browser.
+require 'launchy'
 # Octokit is used to access GitHub's API.
 require 'octokit'
 # Time is used to parse time strings from git back into Time objects.
 require 'time'
-# JSON is used to cache GitHub API response data.
-require 'json'
 
 class GitForks
 
@@ -95,7 +97,7 @@ class GitForks
       puts l('Owner', 25) + l('Branches', 12) + 'Updated'
       puts l('------', 25) + l('--------', 12) + '-------'
       puts output.compact
-      puts
+      puts '-' * 80
     end
   end
 
@@ -114,18 +116,57 @@ class GitForks
   def show
     owner = @args.shift
     option = @args.shift
-    if f = fork(owner)
-      puts '-' * 80
-      puts "Owner    : #{f['owner']['login']}"
-      puts "Created  : #{strftime(f['created_at'])}"
-      puts "Updated  : #{strftime(f['updated_at'])}"
-      puts "Branches : #{f['branches'].size}"
-      f['branches'].each do |b|
-        puts "  #{b['commit']['sha']} #{b['name']}"
+    if owner
+      if f = fork(owner)
+        puts '-' * 80
+        puts "Owner    : #{f['owner']['login']}"
+        puts "Repo     : #{@repo}"
+        puts "Created  : #{strftime(f['created_at'])}"
+        puts "Updated  : #{strftime(f['updated_at'])}"
+        puts "Branches : #{f['branches'].size}"
+        f['branches'].each do |b|
+          puts "  #{b['commit']['sha']} #{b['name']}"
+        end
+        puts '-' * 80
+      else
+        puts "No such fork: '#{owner}/#{@repo}'. Maybe you need to run git-forks update?"
+        puts
+        list
       end
-      puts
     else
-      puts "No such fork: #{owner}/#{@repo}"
+        puts "<owner> argument missing"
+        puts
+        usage
+    end
+  end
+
+  def browse
+    owner = @args.shift
+    if owner
+      owner, ref = owner.split(':')
+
+      if f = fork(owner)
+        url = f['html_url']
+
+        if ref
+          if ref.match(/[A-Za-z0-9]{40}/)
+            url << "/commits/#{ref}"
+          else
+            url << "/tree/#{ref}"
+          end
+        end
+
+        return Launchy.open(url)
+      elsif owner == "network"
+      else
+        puts "No such fork: '#{owner}/#{@repo}'. Maybe you need to run git-forks update?"
+        puts
+        list
+      end
+    else
+      puts "<owner> argument missing"
+      puts
+      usage
     end
   end
 
@@ -135,9 +176,11 @@ class GitForks
     puts 'Get GitHub project forks information.'
     puts
     puts 'Available commands:'
-    puts '  update                  Retrieve fork info from GitHub API v3.'
     puts '  list [--reverse]        List all forks.'
     puts '  show <owner>            Show details for a single fork.'
+    puts '  update                  Retrieve fork info from GitHub API v3.'
+    puts '  browse <owner>[:<ref>]  Show fork in web browser.'
+    puts '                          <ref> denotes a Git Tree or a Git Commit.'
     puts
     puts 'Git configurations:'
     puts '  github.forks.branchpattern        Only grab branches matching this Ruby Regexp.'
@@ -213,7 +256,7 @@ class GitForks
 
   def help
     puts "No command: #{@command}"
-    puts "Try: update, list, show"
+    puts "Try: browse, list, show, update"
     puts "or call with '-h' for usage information"
   end
 

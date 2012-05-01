@@ -1,5 +1,6 @@
 Design and skeleton thanks to [schacon/git-pulls](https://github.com/schacon/git-pulls) and [b4mboo/git-review](https://github.com/b4mboo/git-review).
 
+
 git-forks
 ----------
 
@@ -35,6 +36,15 @@ Get info about a GitHub project's forks.
     Branches : 2
       444a867d338cafc0c82d058b458b4fe268fa14d6 master
       14178fe5b204c38650de8ddaf5d9fb80aa834e74 foo
+
+    $ git forks browse justintoo
+    > launch web browser to view in GitHub
+
+    $ git forks browse justintoo:test-branch
+    > launch web browser to view in GitHub
+
+    $ git forks browse justintoo:c4a8c4aef3814e74f79a1f8a4894618b49ad7486
+    > launch web browser to view in GitHub
 
 
 Installation

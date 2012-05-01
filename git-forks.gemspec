@@ -2,7 +2,7 @@ $LOAD_PATH.unshift 'lib'
 
 Gem::Specification.new do |s|
   s.name     = "git-forks"
-  s.version  = "0.0.1"
+  s.version  = "0.0.2"
   s.date     = Time.now.strftime('%F')
   s.summary  = "gets info about a GitHub project's forks"
   s.homepage = "http://github.com/doubleotoo/git-forks"
@@ -17,5 +17,6 @@ Gem::Specification.new do |s|
   s.description = "git-forks gets info about a GitHub project's forks."
 
   s.add_runtime_dependency 'json'
+  s.add_runtime_dependency 'launchy'
   s.add_runtime_dependency 'octokit', '= 0.6.5'
 end
