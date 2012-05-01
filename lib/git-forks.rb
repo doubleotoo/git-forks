@@ -99,7 +99,7 @@ class GitForks
         puts '-' * 80
         puts "Fething Git data from fork '#{owner}/#{@repo}'"
         git("fetch #{github_endpoint}/#{owner}/#{@repo}.git " +
-            "+refs/heads/*:refs/forks/#{owner}/#{@repo}/*")
+            "+refs/heads/*:refs/forks/#{owner}/*")
       end
     end
   end

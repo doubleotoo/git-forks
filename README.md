@@ -46,6 +46,31 @@ Get info about a GitHub project's forks.
     $ git forks browse justintoo:c4a8c4aef3814e74f79a1f8a4894618b49ad7486
     > launch web browser to view in GitHub
 
+    $ git forks fetch
+    Retrieving the latest GitHub data...
+    --------------------------------------------------------------------------------
+    Fething Git data from fork 'justintoo/foo'
+    From https://github.com/justintoo/foo
+     * [new branch]      foo        -> refs/forks/justintoo/foo/foo
+     * [new branch]      master     -> refs/forks/justintoo/foo/master
+    --------------------------------------------------------------------------------
+    Fething Git data from fork 'rose-compiler/foo'
+    remote: Counting objects: 12, done.
+    remote: Compressing objects: 100% (4/4), done.
+    remote: Total 7 (delta 1), reused 7 (delta 1)
+    Unpacking objects: 100% (7/7), done.
+    From https://github.com/rose-compiler/foo
+     * [new branch]      master     -> refs/forks/rose-compiler/master
+     * [new branch]      rosecompiler-rc -> refs/forks/rose-compiler/rosecompiler-rc
+
+    $ git forks fetch justintoo
+    Retrieving the latest GitHub data...
+    --------------------------------------------------------------------------------
+    Fething Git data from fork 'justintoo/foo'
+    From https://github.com/justintoo/foo
+     * [new branch]      foo        -> refs/forks/justintoo/foo
+     * [new branch]      master     -> refs/forks/justintoo/master
+
 
 Installation
 ------------
