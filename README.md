@@ -71,6 +71,26 @@ Get info about a GitHub project's forks.
      * [new branch]      master     -> refs/forks/justintoo/master
 
 
+Configure which forks you are interested in:
+
+    $ git forks config list
+
+    $ git forks config add justintoo
+    Added justintoo
+
+    $ git forks config add rose-compiler
+    Added rose-compiler
+
+    $ git forks config list
+    justintoo
+    rose-compiler
+
+    $ git forks config remove rose-compiler
+    Removed rose-compiler.
+
+    $ git forks config get rose-compiler
+
+
 Installation
 ------------
 

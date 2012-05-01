@@ -62,6 +62,56 @@ class GitForks
   # Commands
   #-----------------------------------------------------------------------------
 
+  # list
+  # get
+  # add
+  # remove
+  def config
+    action = @args.shift
+    owner  = @args.shift
+
+    if action
+      if owner || action == "list"
+        case action
+        when "list"
+          if (f = config_get_forks).size > 0
+            puts f
+          end
+        when "get"
+          if (v = config_get_fork(owner)).size > 0
+            puts v
+          end
+        when "add"
+          if config_get_fork(owner).size > 0
+            puts "#{owner} already exists."
+          else
+            config_add_fork(owner)
+            puts "Added #{owner}."
+          end
+        when "remove"
+          if config_get_fork(owner).empty?
+            puts "#{owner} not found."
+          else
+            config_remove_fork(owner)
+            puts "Removed #{owner}."
+          end
+        else
+          puts "<action> unknown"
+          puts
+          usage
+        end
+      else
+        puts "<owner> argument missing"
+        puts
+        usage
+      end
+    else
+      puts "<action> argument missing"
+      puts
+      usage
+    end
+  end
+
   # Get the latest GitHub data.
   def update
     puts 'Retrieving the latest GitHub data...'
@@ -274,23 +324,6 @@ class GitForks
   end
 
   #-----------------------------------------------------------------------------
-  # Git
-  #-----------------------------------------------------------------------------
-
-  def git(command)
-    `git #{command}`.chomp
-  end
-
-  def github_endpoint
-    host = git("config --get-all github.host")
-    if host.size > 0
-      host
-    else
-      'https://github.com'
-    end
-  end
-
-  #-----------------------------------------------------------------------------
   # Display Helper Functions
   #-----------------------------------------------------------------------------
 
@@ -319,6 +352,10 @@ class GitForks
       #config.login = github_login
     end
   end
+
+  #-----------------------------------------------------------------------------
+  # Git
+  #-----------------------------------------------------------------------------
 
   #def github_login
   #  git("config --get-all github.user")
@@ -360,6 +397,35 @@ class GitForks
       return m[1], m[2].sub(/\.git\Z/, "")
     end
     return nil, nil
+  end
+
+  def git(command)
+    `git #{command}`.chomp
+  end
+
+  def github_endpoint
+    host = git("config --get-all github.host")
+    if host.size > 0
+      host
+    else
+      'https://github.com'
+    end
+  end
+
+  def config_get_forks
+    git("config --get-all github.forks.owner")
+  end
+
+  def config_get_fork(owner)
+    git("config --get-all github.forks.owner \"^#{owner}$\"")
+  end
+
+  def config_add_fork(owner)
+    git("config --add github.forks.owner #{owner}")
+  end
+
+  def config_remove_fork(owner)
+    git("config --unset github.forks.owner \"^#{owner}$\"")
   end
 
 end # GitForks
