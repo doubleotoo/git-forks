@@ -1,3 +1,5 @@
+require 'logger'
+
 # JSON is used to cache GitHub API response data.
 require 'json'
 # Launchy is used in 'browse' to open a browser.
@@ -15,7 +17,7 @@ class GitForks
     @command = args.shift
     @user, @repo = repo_info
     @args = args
-    @branch_pattern = branch_pattern
+    @updated = false
   end
 
   def self.start(args)
@@ -39,30 +41,67 @@ class GitForks
   end
 
   #-----------------------------------------------------------------------------
+  # Logging (stolen from Grit)
+  #-----------------------------------------------------------------------------
+
+  class << self
+    # Set +debug+ to true to log everything
+    attr_accessor :debug
+
+    # The standard +logger+ for debugging - this defaults to a plain STDOUT logger
+    attr_accessor :logger
+    def log(str)
+      logger.debug { str }
+    end
+  end
+  self.debug = false # TODO: add --verbose switch
+
+  @logger ||= ::Logger.new(STDOUT)
+
+  #-----------------------------------------------------------------------------
   # Commands
   #-----------------------------------------------------------------------------
 
   # Get the latest GitHub data.
   def update
+    puts 'Retrieving the latest GitHub data...'
+
     cache('forks', fetch_fork_info)
     update_branches
+
+    @updated = true
   end
 
   # Fetch and cache all branches for each fork.
-  def update_branches(pattern=nil)
-    pattern ||= @branch_pattern
+  def update_branches
     forks = get_cached_data('forks')
 
     forks.each do |fork|
       fork_user = fork['owner']['login']
-      puts "Checking for new branches matching '#{pattern}' in '#{fork_user}/#{@repo}'"
+      GitForks.log "Fetching branches in '#{fork_user}/#{@repo}'" if GitForks.debug
 
-      branches = fetch_fork_branches(fork_user, pattern)
+      branches = fetch_fork_branches(fork_user)
 
       fork['branches'] = branches
     end
 
     cache('forks', forks)
+  end
+
+  # git-fetch from the fork's GitHub repository. (Forces cache update.)
+  def fetch
+    target_owners = @args
+
+    update if not @updated
+    get_cached_data('forks').each do |fork|
+      owner = fork['owner']['login']
+      if target_owners.empty? or target_owners.include?(owner)
+        puts '-' * 80
+        puts "Fething Git data from fork '#{owner}/#{@repo}'"
+        git("fetch #{github_endpoint}/#{owner}/#{@repo}.git " +
+            "+refs/heads/*:refs/forks/#{owner}/#{@repo}/*")
+      end
+    end
   end
 
   # List all forks.
@@ -170,20 +209,26 @@ class GitForks
     end
   end
 
+  def help
+    puts "No command: #{@command}"
+    puts "Try: browse, fetch, list, show, update"
+    puts "or call with '-h' for usage information"
+  end
+
   # Show a quick reference of available commands.
   def usage
     puts 'Usage: git forks <command>'
     puts 'Get GitHub project forks information.'
     puts
     puts 'Available commands:'
+    puts '  browse <owner>[:<ref>]  Show fork in web browser.'
+    puts '                          <ref> denotes a Git Tree or a Git Commit.'
+    puts '  fetch <owners>          git-fetch fork data from GitHub.'
+    puts '                          <owners> is a space separate list.'
+    puts '                          (Forces cache update.)'
     puts '  list [--reverse]        List all forks.'
     puts '  show <owner>            Show details for a single fork.'
     puts '  update                  Retrieve fork info from GitHub API v3.'
-    puts '  browse <owner>[:<ref>]  Show fork in web browser.'
-    puts '                          <ref> denotes a Git Tree or a Git Commit.'
-    puts
-    puts 'Git configurations:'
-    puts '  github.forks.branchpattern        Only grab branches matching this Ruby Regexp.'
   end
 
   #-----------------------------------------------------------------------------
@@ -224,10 +269,25 @@ class GitForks
     forks = Octokit.forks("#{@user}/#{@repo}")
   end
 
-  def fetch_fork_branches(fork_user, pattern)
-    pattern ||= @branch_pattern
+  def fetch_fork_branches(fork_user)
     branches = Octokit.branches("#{fork_user}/#{@repo}")
-                  .select {|b| not b.name.match(pattern).nil? }
+  end
+
+  #-----------------------------------------------------------------------------
+  # Git
+  #-----------------------------------------------------------------------------
+
+  def git(command)
+    `git #{command}`.chomp
+  end
+
+  def github_endpoint
+    host = git("config --get-all github.host")
+    if host.size > 0
+      host
+    else
+      'https://github.com'
+    end
   end
 
   #-----------------------------------------------------------------------------
@@ -254,12 +314,6 @@ class GitForks
   private
   #-----------------------------------------------------------------------------
 
-  def help
-    puts "No command: #{@command}"
-    puts "Try: browse, list, show, update"
-    puts "or call with '-h' for usage information"
-  end
-
   def configure
     Octokit.configure do |config|
       #config.login = github_login
@@ -269,15 +323,6 @@ class GitForks
   #def github_login
   #  git("config --get-all github.user")
   #end
-
-  def branch_pattern
-    patterns = git("config --get-all github.forks.branchpattern")
-    if patterns.empty?
-      Regexp.new(/.+/) # match anything
-    else
-      Regexp.new(patterns.gsub("\n", "|"))
-    end
-  end
 
   def repo_info
     c = {}
@@ -315,10 +360,6 @@ class GitForks
       return m[1], m[2].sub(/\.git\Z/, "")
     end
     return nil, nil
-  end
-
-  def git(command)
-    `git #{command}`.chomp
   end
 
 end # GitForks

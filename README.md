@@ -7,8 +7,8 @@ git-forks
 Get info about a GitHub project's forks.
 
     $ git forks update
-    Checking for new branches matching '(?-mix:.+)' in 'justintoo/foo'
-    Checking for new branches matching '(?-mix:.+)' in 'rose-compiler/foo'
+    Checking for new branches in 'justintoo/foo'
+    Checking for new branches in 'rose-compiler/foo'
 
     $ git forks list
     --------------------------------------------------------------------------------
@@ -59,10 +59,3 @@ Afterwards simply do:
     gem install git-forks
 
 (Prefix with `sudo` if necessary)
-
-You can retrieve Fork branches matching a regular expression:
-
-    git config --local github.forks.branchpattern <Ruby::Regexp>
-
-(Multiple `branchpattern` regular expressions can be specified. The resulting Regexp will be OR'd together.)
-
