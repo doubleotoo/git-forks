@@ -170,7 +170,7 @@ class GitForks
         puts
         print "This is your current forks whitelist: "
         if (f = config_get_forks).size > 0
-          puts f.gsub('\n', ', ')
+          puts f.gsub("\n", ', ')
         else
           puts "<empty>"
         end

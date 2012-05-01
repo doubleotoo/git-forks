@@ -2,7 +2,7 @@ $LOAD_PATH.unshift 'lib'
 
 Gem::Specification.new do |s|
   s.name     = "git-forks"
-  s.version  = "0.0.3"
+  s.version  = "0.0.4"
   s.date     = Time.now.strftime('%F')
   s.summary  = "gets info about a GitHub project's forks"
   s.homepage = "http://github.com/doubleotoo/git-forks"
