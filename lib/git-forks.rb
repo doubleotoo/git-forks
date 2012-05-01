@@ -11,7 +11,8 @@ require 'time'
 
 class GitForks
 
-  CACHE_FILE = '.git/forks_cache.json'
+  CACHE_FILE         = '.git/forks_cache.json'
+  NO_UPDATE_ACTIONS  = ['help', 'usage', 'update', 'config']
 
   def initialize(args)
     @command = args.shift
@@ -30,7 +31,7 @@ class GitForks
       # If the cache file doesn't exist, make sure we run update
       # before any other command. git-forks will otherwise crash
       # with an exception.
-      update unless File.exists?(CACHE_FILE) || @command == 'update'
+      update unless File.exists?(CACHE_FILE) || NO_UPDATE_ACTIONS.include?(@command)
 
       self.send @command
     elsif %w(-h --help).include?(@command)
@@ -66,6 +67,7 @@ class GitForks
   # get
   # add
   # remove
+  #
   def config
     action = @args.shift
     owner  = @args.shift
@@ -92,11 +94,12 @@ class GitForks
           if config_get_fork(owner).empty?
             puts "#{owner} not found."
           else
+            # (Forces cache update.)
             config_remove_fork(owner)
             puts "Removed #{owner}."
           end
         else
-          puts "<action> unknown"
+          puts "<action> '#{action}' unknown"
           puts
           usage
         end
@@ -142,66 +145,82 @@ class GitForks
   def fetch
     target_owners = @args
 
-    update if not @updated
+    update if not @updated # force cache update
+
+    cached_owners = []
     get_cached_data('forks').each do |fork|
-      owner = fork['owner']['login']
-      if target_owners.empty? or target_owners.include?(owner)
+      cached_owners << fork['owner']['login']
+    end
+
+    # fetch all configured forks by default
+    target_owners = cached_owners if target_owners.empty?
+
+    target_owners.each do |owner|
+      if cached_owners.include?(owner)
         puts '-' * 80
         puts "Fething Git data from fork '#{owner}/#{@repo}'"
-        git("fetch #{github_endpoint}/#{owner}/#{@repo}.git " +
-            "+refs/heads/*:refs/forks/#{owner}/*")
+        git_fetch_fork(owner)
+      else
+        # TODO: add --force => add owner to config automatically
+        puts '-' * 80
+        puts "'#{owner}/#{@repo}' is not in your forks whitelist."
+        puts
+        puts "Run:  $ git forks config add #{owner}"
+        puts "and then try again, if you really want to pull from this fork."
+        puts
+        print "This is your current forks whitelist: "
+        if (f = config_get_forks).size > 0
+          puts f.gsub('\n', ', ')
+        else
+          puts "<empty>"
+        end
+        exit 1
       end
     end
   end
 
   # List all forks.
   #
-  # Example::
-  #
-  #   --------------------------------------------------------------------------------
-  #   Forks of 'doubleotoo/foo/master'
-  #
-  #   Owner                    Branches    Updated
-  #   ------                   --------    -------
-  #   justintoo                2           01-May-12
-  #   rose-compiler            3           27-Apr-12
+  # TODO: add sorting by column
   #
   def list
     forks = get_cached_data('forks')
     forks.reverse! if @args.shift == '--reverse'
 
+    whitelist = config_get_forks.split("\n")
+
     output = forks.collect do |f|
+      owner = f['owner']['login']
+      whitelist.delete(owner)
+
       line = ""
-      line << l(f['owner']['login'], 25)
+      line << l(owner, 25)
       line << l(f['branches'].size, 12)
       line << strftime(clean(f['updated_at']))
     end
 
     if output.compact.empty?
-      puts "No forks of '#{@user}/#{@repo}'"
+      puts "No forks of '#{@user}/#{@repo}'."
     else
       puts '-' * 80
-      puts "Forks of '#{@user}/#{@repo}'"
+      puts "Forks of '#{@user}/#{@repo}':"
       puts
       puts l('Owner', 25) + l('Branches', 12) + 'Updated'
       puts l('------', 25) + l('--------', 12) + '-------'
       puts output.compact
+      if whitelist.size > 0
+        whitelist.each do |f|
+          puts l(f, 25) + l('*', 12) + '*'
+        end
+
+        puts
+        puts '* no cache data available; may require `update`'
+      end
       puts '-' * 80
     end
   end
 
   # Show details of one fork.
-  #
-  # Example::
-  #
-  #   -------------------------------------------------------------------------------
-  #   Owner    : justintoo
-  #   Created  : 01-May-12
-  #   Updated  : 01-May-12
-  #   Branches : 2
-  #     444a867d338cafc0c82d058b458b4fe268fa14d6 master
-  #     14178fe5b204c38650de8ddaf5d9fb80aa834e74 foo
-  #
   def show
     owner = @args.shift
     option = @args.shift
@@ -260,25 +279,43 @@ class GitForks
   end
 
   def help
-    puts "No command: #{@command}"
-    puts "Try: browse, fetch, list, show, update"
-    puts "or call with '-h' for usage information"
+    puts "No command: #{@command}" if not @command == 'help'
+    puts "Try: browse, config, fetch, list, show, update;"
+    puts "     or call with '-h' for usage information"
   end
 
   # Show a quick reference of available commands.
   def usage
-    puts 'Usage: git forks <command>'
-    puts 'Get GitHub project forks information.'
+    puts 'Usage: git forks [-h] <command>'
+    puts
+    puts 'Manage your GitHub project\'s forks.'
     puts
     puts 'Available commands:'
     puts '  browse <owner>[:<ref>]  Show fork in web browser.'
     puts '                          <ref> denotes a Git Tree or a Git Commit.'
-    puts '  fetch <owners>          git-fetch fork data from GitHub.'
+    puts '  config <action> [owner] Configure which forks you are interested in (all by default).'
+    puts
+    puts '                          Available actions:                          '
+    puts '                            list            List all forks.'
+    puts '                            get <owner>     Check for <owner>.'
+    puts '                            add <owner>     Add <owner>.'
+    puts '                            remove <owner>  Remove <owner>. (Forces cache update.)'
+    puts
+    puts '                                            The associated git-ref data is also removed.'
+    puts
+    puts '                                            You may want to run `git gc --prune=now` to'
+    puts '                                            remove stale objects that you fetched from'
+    puts '                                            your forks. (Also, see git-reflog.)'
+    puts
+    puts '                                            You can run `git fsck` to list dangling objects.'
+    puts
+    puts '                                            (git-gc does have various default expiry times.)'
+    puts '  fetch [<owners>]        git-fetch fork data from GitHub. (Forces cache update.)'
     puts '                          <owners> is a space separate list.'
-    puts '                          (Forces cache update.)'
     puts '  list [--reverse]        List all forks.'
     puts '  show <owner>            Show details for a single fork.'
     puts '  update                  Retrieve fork info from GitHub API v3.'
+    puts '  usage                   Show this usage information.'
   end
 
   #-----------------------------------------------------------------------------
@@ -316,7 +353,10 @@ class GitForks
   #-----------------------------------------------------------------------------
 
   def fetch_fork_info
-    forks = Octokit.forks("#{@user}/#{@repo}")
+    targets = config_get_forks # optional fork targets
+    forks = Octokit.forks("#{@user}/#{@repo}").select {|f|
+      targets.empty? or targets.include?(f.owner.login)
+    }
   end
 
   def fetch_fork_branches(fork_user)
@@ -424,8 +464,36 @@ class GitForks
     git("config --add github.forks.owner #{owner}")
   end
 
+  # (Forces cache update.)
   def config_remove_fork(owner)
     git("config --unset github.forks.owner \"^#{owner}$\"")
+    git_remove_fork(owner)
+    update # TODO: optimize by only updating if fork existed
   end
 
+  # Remove a fork's git-refs.
+  #
+  # Directory:  refs/forks/rose-compiler/ <-- notice the trailing slash
+  # Single:     refs/forks/rose-compiler/master
+  def git_remove_fork(owner)
+    refdir = "refs/forks/#{owner}"
+    gitdir = ".git/#{refdir}"
+
+    if Dir.exists?(gitdir)
+      Dir.foreach(gitdir) do |ref|
+        next if ref == '.' or ref == '..'
+        # delete each individual ref
+        git("update-ref -d #{refdir}/#{ref}")
+      end
+
+      # delete the ref directory
+      git("update-ref -d #{refdir}")
+    end
+  end
+
+  def git_fetch_fork(owner)
+    git("fetch --prune " +
+        "#{github_endpoint}/#{owner}/#{@repo}.git " +
+        "+refs/heads/*:refs/forks/#{owner}/*")
+  end
 end # GitForks
