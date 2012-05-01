@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+ruby_string="1.9.2-p318"
+gemset_name="git-forks"
+
+if rvm list strings | grep -q "${ruby_string}" ; then
+
+  # Load or create the specified environment
+  if [[ -d "${rvm_path:-$HOME/.rvm}/environments" \
+    && -s "${rvm_path:-$HOME/.rvm}/environments/${ruby_string}@${gemset_name}" ]] ; then
+    \. "${rvm_path:-$HOME/.rvm}/environments/${ruby_string}@${gemset_name}"
+  else
+    rvm --create  "${ruby_string}@${gemset_name}"
+  fi
+
+  PS1="(${gemset_name}) $PS1"
+
+else
+
+  # Notify the user to install the desired interpreter before proceeding.
+  echo "${ruby_string} was not found, please run 'rvm install ${ruby_string}' and then cd back into the project directory."
+
+fi
+
+# Ensure that Bundler is installed. Install it if it is not.
+if ! command -v bundle >/dev/null; then
+   printf "The rubygem 'bundler' is not installed. Installing it now.\n"
+   gem install bundler
+fi
+
+# Bundle while reducing excess noise.
+printf "Bundling your gems. This may take a few minutes on a fresh clone.\n"
+bundle | grep -v '^Using ' | grep -v ' is complete' | sed '/^$/d'
