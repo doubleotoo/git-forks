@@ -7,8 +7,7 @@ git-forks
 Get info about a GitHub project's forks.
 
     $ git forks update
-    Checking for new branches in 'justintoo/foo'
-    Checking for new branches in 'rose-compiler/foo'
+    Retrieving the latest GitHub data...
 
     $ git forks list
     --------------------------------------------------------------------------------
