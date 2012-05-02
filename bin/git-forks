@@ -3,6 +3,7 @@ require 'rubygems'
 
 $LOAD_PATH.unshift File.dirname(__FILE__) + '/../lib'
 
-require 'git-forks'
+#require 'git-forks'
+require 'github_flow'
 
 GitForks.start(ARGV)
