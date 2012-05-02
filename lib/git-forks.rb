@@ -19,6 +19,7 @@ class GitForks
     @user, @repo = repo_info
     @args = args
     @updated = false
+    @fetched = false
   end
 
   def self.start(args)
@@ -69,8 +70,8 @@ class GitForks
   # remove
   #
   def config
-    action = @args.shift
-    owner  = @args.shift
+    action = @args[0]
+    owner  = @args[1]
 
     if action
       if owner || action == "list"
@@ -121,6 +122,8 @@ class GitForks
 
     cache('forks', fetch_fork_info)
     update_branches
+
+    fetch and @args.shift if @args[0] == "--fetch"
 
     @updated = true
   end
@@ -176,6 +179,7 @@ class GitForks
         end
         exit 1
       end
+      @fetched = true
     end
   end
 
@@ -185,7 +189,7 @@ class GitForks
   #
   def list
     forks = get_cached_data('forks')
-    forks.reverse! if @args.shift == '--reverse'
+    forks.reverse! and @args.shift if @args[0] == '--reverse'
 
     whitelist = config_get_forks
 
@@ -232,21 +236,48 @@ class GitForks
         puts "Created  : #{strftime(f['created_at'])}"
         puts "Updated  : #{strftime(f['updated_at'])}"
         puts "Branches : #{f['branches'].size}"
+
+        # Compute column length for ref names
+        name_column_length = 8
         f['branches'].each do |b|
-          puts "  #{b['commit']['sha']} #{b['name']}"
+          length = b['name'].length + 2
+          name_column_length = length if length > name_column_length
+        end
+
+        # Print one line per ref
+        # TODO: sort by column
+        f['branches'].each do |b|
+          line = "  #{b['commit']['sha']} #{l(b['name'], name_column_length)}"
+
+          # <sha> <ref> [(<commits> ahead)]
+          # --full
+          new_commits = []
+          if Dir.exists?(".git/refs/forks/#{owner}")
+            new_commits = git_new_commits(owner, b['name'])
+            if new_commits.size > 0
+              line << "(#{new_commits.size} ahead)"
+              if option == '--full'
+                new_commits.each do |c|
+                  line << "\n  |-#{c[:sha][0,8]} #{c[:msg]}"
+                end
+              end # --full
+            end
+          end
+
+          puts line
         end
         puts '-' * 80
       else
         puts "No such fork: '#{owner}/#{@repo}'. Maybe you need to run git-forks update?"
         puts
         list
-      end
+      end # if
     else
         puts "<owner> argument missing"
         puts
         usage
-    end
-  end
+    end # if
+  end # show
 
   def browse
     owner = @args.shift
@@ -314,7 +345,7 @@ class GitForks
     puts '                          <owners> is a space separate list.'
     puts '  list [--reverse]        List all forks.'
     puts '  show <owner>            Show details for a single fork.'
-    puts '  update                  Retrieve fork info from GitHub API v3.'
+    puts '  update [--fetch]        Retrieve fork info from GitHub API v3 [and git-fetch ref data].'
     puts '  usage                   Show this usage information.'
   end
 
@@ -375,8 +406,8 @@ class GitForks
     forks
   end
 
-  def fetch_fork_branches(fork_user)
-    branches = Octokit.branches("#{fork_user}/#{@repo}")
+  def fetch_fork_branches(owner)
+    branches = Octokit.branches("#{owner}/#{@repo}")
   end
 
   #-----------------------------------------------------------------------------
@@ -511,5 +542,24 @@ class GitForks
     git("fetch --prune " +
         "#{github_endpoint}/#{owner}/#{@repo}.git " +
         "+refs/heads/*:refs/forks/#{owner}/*")
+  end
+
+  # opts::
+  #
+  #   :fetch git-ref data before computing the diff
+  #
+  # Returns [
+  def git_new_commits(owner, ref, opts = {})
+    fetch if opts[:fetch]
+    new_commits = git("log --pretty=oneline origin/master..refs/forks/#{owner}/#{ref}").split("\n")
+    new_commits.collect do |c|
+      c   = c.split
+      sha = c.shift
+      msg = c.join(' ')
+      {
+        :sha => sha,
+        :msg => msg
+      }
+    end
   end
 end # GitForks
