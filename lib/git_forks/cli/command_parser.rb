@@ -14,6 +14,12 @@ module GitForks
     # @see default_command
     class CommandParser
       class << self
+        attr_accessor :usage
+
+        # @return [module] the module constant which is the namespace
+        #   for the commands in this {CommandParser}.
+        attr_accessor :commands_namespace
+
         # @return [Hash{Symbol => Command}] the mapping of command names to
         #   command classes to parse the user command.
         attr_accessor :commands
@@ -23,6 +29,8 @@ module GitForks
         attr_accessor :default_command
       end
 
+      self.usage = "Usage: git forks <command> [options]"
+      self.commands_namespace = CLI
       self.commands = [
         :browse,
         :config,
@@ -32,12 +40,11 @@ module GitForks
         :show,
         :update
       ]
-
-      self.default_command = :Help
+      self.default_command = :help
 
       def self.get_command(str)
         if i = self.commands.index(str.to_sym)
-          self.commands[i].capitalize.to_class(CLI)
+          self.commands[i].capitalize.to_class(commands_namespace)
         else
           nil
         end
@@ -66,7 +73,7 @@ module GitForks
             command_name = args.first.to_sym
             args.shift
           end
-          if command = CommandParser.get_command(command_name)
+          if command = self.class.get_command(command_name)
             return command.run(*args)
           end
         end
@@ -77,11 +84,11 @@ module GitForks
       def commands; self.class.commands end
 
       def list_commands
-        puts "Usage: git forks <command> [options]"
+        puts self.class.usage
         puts
         puts "Commands:"
         commands.sort_by {|k| k.to_s }.each do |command_name|
-          command = CommandParser.get_command(command_name).new
+          command = self.class.get_command(command_name).new
           puts "%-8s %s" % [command_name, command.description]
         end
       end

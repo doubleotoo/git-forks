@@ -4,9 +4,9 @@ require 'optparse'
 module GitForks
   module CLI
     # Raised when a required positional argument is missing.
-    class PositionalArgumentMissingError < Exception
-      def initialize(msg = 'positional argument(s) missing')
-        super(msg)
+    class PositionalArgumentMissing < Exception
+      def initialize(usage, msg = 'positional argument(s) missing')
+        super(msg + "\n" + usage.to_s)
       end
     end
 

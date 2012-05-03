@@ -7,6 +7,12 @@ module GitForks
     autoload :CommandParser,  __p('cli/command_parser')
     autoload :Browse,         __p('cli/browse')
     autoload :Config,         __p('cli/config')
+    class Config
+      autoload :Add,          __p('cli/config/add')
+      autoload :Get,          __p('cli/config/get')
+      autoload :List,         __p('cli/config/list')
+      autoload :Remove,       __p('cli/config/remove')
+    end
     autoload :Fetch,          __p('cli/fetch')
     autoload :Help,           __p('cli/help')
     autoload :List,           __p('cli/list')
