@@ -3,6 +3,13 @@ require 'optparse'
 
 module GitForks
   module CLI
+    # Raised when a required positional argument is missing.
+    class PositionalArgumentMissingError < Exception
+      def initialize(msg = 'positional argument(s) missing')
+        super(msg)
+      end
+    end
+
     # Abstract base class for CLI utilities. Provides some helper methods for
     # the option parser
     #
@@ -10,7 +17,7 @@ module GitForks
     class Command
       # Helper method to run the utility on an instance.
       # @see #run
-      def self.run(*args) new.run(*args) end
+      def self.run(*argv) new.run(*argv) end
 
       def description; '' end
 
@@ -23,10 +30,6 @@ module GitForks
       def common_options(opts)
         opts.separator ""
         opts.separator "Other options:"
-        opts.on('--plugin PLUGIN', 'Load a GitForks plugin (gem with `yard-\' prefix)') do |name|
-          # Not actually necessary to load here, this is done at boot in GitForks::Config.load_plugins
-          # GitForks::Config.load_plugin(name)
-        end
         opts.on_tail('-q', '--quiet', 'Show no warnings.') { log.level = Logger::ERROR }
         opts.on_tail('--verbose', 'Show more information.') { log.level = Logger::INFO }
         opts.on_tail('--debug', 'Show debugging information.') { log.level = Logger::DEBUG }
@@ -35,17 +38,18 @@ module GitForks
         opts.on_tail('-h', '--help', 'Show this help.')  { puts opts; exit }
       end
 
-      # Parses the option and gracefully handles invalid switches
+      # Parses the option and gracefully handles invalid switches.
+      # Positional arguments will be untouched in +argv+
       #
       # @param [OptionParser] opts the option parser object
-      # @param [Array<String>] args the arguments passed from input. This
+      # @param [Array<String>] argv the arguments passed from input. This
       #   array will be modified.
-      # @return [void]
-      def parse_options(opts, args)
-        opts.parse!(args)
+      # @return [Void]
+      def parse_options(opts, argv)
+        opts.parse!(argv)
       rescue OptionParser::ParseError => err
         log.warn "Unrecognized/#{err.message}"
-        args.shift if args.first && args.first[0,1] != '-'
+        argv.shift if argv.first && argv.first[0,1] != '-'
         retry
       end
     end

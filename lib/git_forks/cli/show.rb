@@ -2,14 +2,14 @@
 module GitForks
   module CLI
     # Handles help for commands
-    class Help < Command
+    class Show < Command
       def description; "Retrieves help for a command" end
 
-      def run(*argv)
-        if argv.first && cmd = CommandParser.get_command(argv.first)
+      def run(*args)
+        if args.first && cmd = CommandParser.get_command(args.first)
           cmd.run('--help')
         else
-          puts "Command #{argv.first} not found." if argv.first
+          puts "Command #{args.first} not found." if args.first
           CommandParser.run('--help')
         end
       end

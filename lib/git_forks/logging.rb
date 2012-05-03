@@ -36,7 +36,7 @@ module GitForks
     # @return [void]
     def backtrace(exc)
       return unless show_backtraces
-      error "#{exc.class.class_name}: #{exc.message}"
+      error "#{exc.class.name}: #{exc.message}"
       error "Stack trace:" +
         exc.backtrace[0..5].map {|x| "\n\t#{x}" }.join + "\n"
     end

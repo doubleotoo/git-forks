@@ -23,17 +23,25 @@ module GitForks
         attr_accessor :default_command
       end
 
-      self.commands = SymbolHash[
-        :browse => Browse,
-        :config => Config,
-        :fetch  => Fetch,
-        :help   => Help,
-        :list   => List,
-        :show   => Show,
-        :update => Update
+      self.commands = [
+        :browse,
+        :config,
+        :fetch,
+        :help,
+        :list,
+        :show,
+        :update
       ]
 
-      self.default_command = :help
+      self.default_command = :Help
+
+      def self.get_command(str)
+        if i = self.commands.index(str.to_sym)
+          self.commands[i].capitalize.to_class(CLI)
+        else
+          nil
+        end
+      end
 
       # Convenience method to create a new CommandParser and call {#run}
       # @return (see #run)
@@ -47,18 +55,21 @@ module GitForks
       # argument.
       # @return [void]
       def run(*args)
-        unless args == ['--help']
+        if %w(-h --help).include?(args.first)
+          list_commands
+        elsif %w(-v --version).include?(args.first)
+          puts "git-forks v#{GitForks::VERSION}"
+        else
           if args.size == 0 || args.first =~ /^-/
             command_name = self.class.default_command
           else
             command_name = args.first.to_sym
             args.shift
           end
-          if commands.has_key?(command_name)
-            return commands[command_name].run(*args)
+          if command = CommandParser.get_command(command_name)
+            return command.run(*args)
           end
         end
-        list_commands
       end
 
       private
@@ -69,8 +80,8 @@ module GitForks
         puts "Usage: git forks <command> [options]"
         puts
         puts "Commands:"
-        commands.keys.sort_by {|k| k.to_s }.each do |command_name|
-          command = commands[command_name].new
+        commands.sort_by {|k| k.to_s }.each do |command_name|
+          command = CommandParser.get_command(command_name).new
           puts "%-8s %s" % [command_name, command.description]
         end
       end

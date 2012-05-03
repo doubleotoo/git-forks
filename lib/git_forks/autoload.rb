@@ -1,5 +1,5 @@
 # @private
-def __p(path) File.join(GitForks::ROOT, 'yard', *path.split('/')); end
+def __p(path) File.join(GitForks::ROOT, 'git_forks', *path.split('/')); end
 
 module GitForks
   module CLI # Namespace for command-line interface components
@@ -13,6 +13,8 @@ module GitForks
     autoload :Show,           __p('cli/show')
     autoload :Update,         __p('cli/update')
   end
+
+  autoload :Logger,  __p('logging')
 end
 
 undef __p

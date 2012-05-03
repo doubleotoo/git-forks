@@ -2,8 +2,6 @@ require File.dirname(__FILE__) + '/lib/git_forks'
 require 'rbconfig'
 
 GitForks::VERSION.replace(ENV['GIT_FORKS_VERSION']) if ENV['GIT_FORKS_VERSION']
-WINDOWS = (RbConfig::CONFIG['host_os'] =~ /mingw|win32|cygwin/ ? true : false) rescue false
-SUDO = WINDOWS ? '' : 'sudo'
 
 task :default => :specs
 
@@ -14,7 +12,7 @@ end
 
 desc "Installs the gem"
 task :install => :gem do
-  sh "#{SUDO} rvm gem install git_forks-#{GitForks::VERSION}.gem --no-rdoc --no-ri"
+  sh "gem install git-forks-#{GitForks::VERSION}.gem --no-rdoc --no-ri"
 end
 
 desc 'Run spec suite'
