@@ -2,19 +2,43 @@ module GitForks
   module CLI
     class Fetch
       class Info < Command
+        # @return [Boolean] if we should cache the fetched data
+        attr_accessor :cache
+
+        # @return [String] the cache file name
+        attr_accessor :cache_file
+
         def initialize
           super
+          @cache = false
+          @cache_file = GitForks::CACHE_FILE
         end
 
         def description; "Add a fork to your configuration" end
 
         def run(*argv)
           optparse(*argv)
-          data = fetch
-          Git::Cache.save({:json => data, :group => 'forks'})
+          forks = fetch
+
+          if @cache
+            Git::Cache.save({:json => forks, :group => 'forks', :file => @cache_file})
+          else
+            puts JSON.pretty_generate(forks)
+          end
         end
 
         def fetch
+          forks = fetch_forks
+
+          forks.each do |f|
+            branches = fetch_branches(f)
+            f.branches = branches
+          end
+
+          forks
+        end
+
+        def fetch_forks
           targets = CLI::Config::List.new.list # optional fork targets
           forks = Github.forks.select {|f|
             targets.empty? or targets.include?(f.owner.login)
@@ -36,6 +60,11 @@ module GitForks
           forks
         end
 
+        def fetch_branches(fork)
+          fork_owner = fork['owner']['login']
+          branches = Github.branches(fork_owner)
+        end
+
         # TODO: option --dry-run: i.e. don't cache
         def optparse(*argv)
           reverse = false
@@ -45,6 +74,13 @@ module GitForks
             o.separator description
             o.separator ''
             o.separator 'Example: git forks fetch info'
+            o.separator ''
+            o.separator "General options:"
+
+            o.on('-c', '--cache [file]', 'Cache the fetched data in [' + @cache_file + ']') do |file|
+              @cache = true
+              @cache_file = file if file
+            end
 
             common_options(o)
           end

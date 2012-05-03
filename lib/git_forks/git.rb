@@ -91,10 +91,11 @@ module GitForks
         # @example Saves a JSON string to file 'cache.json'
         #   save_data('{:forks => [1,2,3]}', 'cache.json')
         # @param [#to_json] data
-        # @param [String] file
+        # @param [String] file name
         # @return [void]
         def write_file(data, file)
           File.open(file, "w+") do |f|
+            log.debug "Writing data to file='#{file}', data='#{data.to_json}'"
             f.puts data.to_json
           end
         end

@@ -33,6 +33,7 @@ module GitForks
 
       def user; repo_info[:user] end
       def repo; repo_info[:name] end
+      def repo_path; "#{user}/#{repo}" end
 
       def user_and_proj(u)
         # Trouble getting optional ".git" at end to work, so put that logic below
@@ -53,11 +54,17 @@ module GitForks
       end
 
       def forks
-        forks = Octokit.forks("#{user}/#{repo}")
+        forks = Octokit.forks(repo_path)
+        log.debug "Fetched forks from '#{repo_path}': '#{JSON.pretty_generate(forks)}'"
+        forks
       end
 
       def branches(fork_owner)
-        branches = Octokit.branches("#{fork_owner}/#{repo}")
+        repo_path = "#{fork_owner}/#{repo}"
+        branches = Octokit.branches(repo_path)
+
+        log.debug "Fetched branches from '#{repo_path}': '#{JSON.pretty_generate(branches)}'"
+        branches
       end
     end
 

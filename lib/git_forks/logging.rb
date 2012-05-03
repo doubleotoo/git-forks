@@ -2,6 +2,7 @@
 
 require 'logger'
 
+# @todo Add caller name to log message
 module GitForks
   # Handles console logging for info, warnings and errors.
   # Uses the stdlib Logger class in Ruby for all the backend logic.
