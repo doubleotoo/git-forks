@@ -14,7 +14,7 @@ module GitForks
           @cache_file = GitForks::CACHE_FILE
         end
 
-        def description; "Add a fork to your configuration" end
+        def description; "Fetch fork information from GitHub" end
 
         def run(*argv)
           optparse(*argv)

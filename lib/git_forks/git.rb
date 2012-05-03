@@ -1,3 +1,5 @@
+require 'json'
+
 module GitForks
   module Git # Namespace for managing Git repository
     class << self
@@ -59,7 +61,7 @@ module GitForks
         # @param [Hash] user_options
         #   +:file+ (optional) the cache file name
         # @return [String,nil]
-        def get(user_options = {})
+        def get_group(user_options = {})
           options = {
             :group => nil,
             :file => GitForks::CACHE_FILE
@@ -79,8 +81,8 @@ module GitForks
         #   fork('justintoo')
         # @param [String] owner
         # @return [JSON,nil]
-        def fork(owner)
-          forks = get(:group => 'forks')
+        def get_fork(owner)
+          forks = get_group(:group => 'forks')
           forks.select {|f| f['owner']['login'] == owner }.first
         end
 

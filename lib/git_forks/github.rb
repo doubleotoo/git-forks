@@ -53,6 +53,10 @@ module GitForks
         end
       end
 
+      def network_url
+        "#{endpoint}/#{repo_path}/network"
+      end
+
       def forks
         forks = Octokit.forks(repo_path)
         log.debug "Fetched forks from '#{repo_path}': '#{JSON.pretty_generate(forks)}'"
