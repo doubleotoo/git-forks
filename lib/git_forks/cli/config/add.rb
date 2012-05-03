@@ -9,7 +9,7 @@ module GitForks
           @owners = []
         end
 
-        def description; "Add a fork to your configuration." end
+        def description; "Add a fork to your configuration" end
 
         def run(*argv)
           @owners = optparse(*argv)
@@ -34,11 +34,11 @@ module GitForks
         def optparse(*argv)
           reverse = false
           opts = OptionParser.new do |o|
-            o.banner = 'Usage: git forks config add owner ...'
-            o.separator ''
-            o.separator 'Example: git forks config add justintoo rose-compiler'
+            o.banner = 'Usage: git forks config add [options] owner ...'
             o.separator ''
             o.separator description
+            o.separator ''
+            o.separator 'Example: git forks config add justintoo rose-compiler'
 
             common_options(o)
           end

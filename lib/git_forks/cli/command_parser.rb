@@ -75,6 +75,9 @@ module GitForks
           end
           if command = self.class.get_command(command_name)
             return command.run(*args)
+          else
+            list_commands
+            abort
           end
         end
       end

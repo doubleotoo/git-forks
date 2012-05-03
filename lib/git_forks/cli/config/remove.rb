@@ -14,7 +14,7 @@ module GitForks
           @owners = []
         end
 
-        def description; "Remove a fork from your configuration." end
+        def description; "Remove a fork from your configuration" end
 
         def run(*argv)
           @owners = optparse(*argv)
@@ -53,11 +53,11 @@ module GitForks
         def optparse(*argv)
           reverse = false
           opts = OptionParser.new do |o|
-            o.banner = 'Usage: git forks config remove owner ...'
-            o.separator ''
-            o.separator 'Example: git forks config remove justintoo rose-compiler'
+            o.banner = 'Usage: git forks config remove [options] owner ...'
             o.separator ''
             o.separator description
+            o.separator ''
+            o.separator 'Example: git forks config remove justintoo rose-compiler'
             o.separator ''
             o.separator "General options:"
 

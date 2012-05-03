@@ -1,18 +1,16 @@
-# TODO: add YARD MIT license
 module GitForks
   module CLI
-    # Handles help for commands
-    class Fetch < Command
-      def description; "Retrieves help for a command" end
+    class Fetch < CommandParser
+      def description; "git-fetch fork data from GitHub (forces cache update)" end
 
-      def run(*args)
-        if args.first && cmd = CommandParser.get_command(args.first)
-          cmd.run('--help')
-        else
-          puts "Command #{args.first} not found." if args.first
-          CommandParser.run('--help')
-        end
-      end
+      self.usage = "Usage: git forks fetch <command> [options]"
+      self.commands_namespace = CLI::Fetch
+      self.commands = [
+        :info,
+        :refs,
+        :help
+      ]
+      self.default_command = :help
     end
   end
 end

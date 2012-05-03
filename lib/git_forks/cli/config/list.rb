@@ -16,15 +16,16 @@ module GitForks
           @reverse  = false
         end
 
-        def description; "List the forks you have configured." end
+        def description; "List the forks you have configured" end
 
         def run(*argv)
           optparse(*argv)
+          owners = list
           if @count
-            puts list.size
-          else
-            puts list
+            owners = owners.size
           end
+          puts owners
+          owners
         end
 
         def list
@@ -38,9 +39,9 @@ module GitForks
           opts = OptionParser.new do |o|
             o.banner = 'Usage: git forks config list [options]'
             o.separator ''
-            o.separator 'Example: git forks config list'
-            o.separator ''
             o.separator description
+            o.separator ''
+            o.separator 'Example: git forks config list'
             o.separator ''
             o.separator "General options:"
 
@@ -57,6 +58,7 @@ module GitForks
 
           parse_options(opts, argv)
           log.warn "ignoring positional arguments: '#{argv}'" unless argv.empty?
+
           argv
         end
       end

@@ -11,12 +11,15 @@ module GitForks
           @reverse  = false
         end
 
-        def description; "Get a fork by owner name from your configuration." end
+        def description; "Get a fork by owner name from your configuration" end
 
         def run(*argv)
           owners = optparse(*argv).sort
           owners.reverse! if @reverse
-          puts get(owners)
+          owners = get(owners)
+
+          puts owners
+          owners
         rescue CLI::PositionalArgumentMissing => e
           log.error(e.message)
           log.backtrace(e) if log.level >= Logger::DEBUG
@@ -37,11 +40,11 @@ module GitForks
         def optparse(*argv)
           reverse = false
           opts = OptionParser.new do |o|
-            o.banner = 'Usage: git forks config get owner ...'
-            o.separator ''
-            o.separator 'Example: git forks config get justintoo rose-compiler'
+            o.banner = 'Usage: git forks config get [options] owner ...'
             o.separator ''
             o.separator description
+            o.separator ''
+            o.separator 'Example: git forks config get justintoo rose-compiler'
             o.separator ''
             o.separator "General options:"
 

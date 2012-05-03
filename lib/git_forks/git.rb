@@ -30,6 +30,77 @@ module GitForks
       end
     end # class << self
 
+    module Cache # Namespace to manage a Git cache
+      class << self
+        # Caches +json+ into a top-level JSON +group+
+        #
+        # @param [String] group the top-level JSON group name
+        # @param [String, JSON] the json the data to be cached
+        # @param [String] the cache file name
+        # @return [void]
+        def cache(user_options = {})
+          options = {
+            :file => GitForks::CACHE_FILE
+          }.merge(user_options).freeze
+          raise 'Missing required option :json' if not options.has_key?(:json)
+          raise 'Missing required option :group' if not options.has_key?(:group)
+          #-----------------------------------------------------------------------------
+          write_file({options[:group] => options[:json]}, options[:file])
+        end
+        alias :save  :cache
+        alias :write :cache
+
+        # Gets cached data.
+        #
+        # @example Gets the entire cached data
+        #   get_cached_data
+        # @example Gets the cached data for the 'forks' group.
+        #   get_cached_data('forks')
+        # @param [Hash] user_options
+        #   +:file+ (optional) the cache file name
+        # @return [String,nil]
+        def get(user_options = {})
+          options = {
+            :group => nil,
+            :file => GitForks::CACHE_FILE
+          }.merge(user_options).freeze
+          #-----------------------------------------------------------------------------
+          data = JSON.parse(File.read(options[:file]))
+          if group = options[:group]
+            data[group]
+          else
+            data
+          end
+        end
+
+        # Gets a cached fork by owner.
+        #
+        # @example Get the fork data belonging to 'justintoo'
+        #   fork('justintoo')
+        # @param [String] owner
+        # @return [JSON,nil]
+        def fork(owner)
+          forks = get(:group => 'forks')
+          forks.select {|f| f['owner']['login'] == owner }.first
+        end
+
+        private
+
+        # Saves +data+ to +file+.
+        #
+        # @example Saves a JSON string to file 'cache.json'
+        #   save_data('{:forks => [1,2,3]}', 'cache.json')
+        # @param [#to_json] data
+        # @param [String] file
+        # @return [void]
+        def write_file(data, file)
+          File.open(file, "w+") do |f|
+            f.puts data.to_json
+          end
+        end
+      end
+    end
+
     module Config # Namespace to manage git-config
       class << self
         # Gets all values for a given +section+

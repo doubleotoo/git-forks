@@ -12,19 +12,19 @@ module GitForks
 
       def initialize
         super
-        self.owners = []
+        @owners = []
+        @repo = Github.repo
       end
 
-      def description; "Shows a fork's GitHub page in a web browser." end
+      def description; "Shows a fork's GitHub page in a web browser" end
 
       # TODO:
       def run(*argv)
         optparse(*argv)
-        log.info "#{self.owner}/#{Git.repo}"
 
         urls = []
 
-        owners.each do |owner|
+        @owners.each do |owner|
           owner, ref = owner.split(':')
 
           if f = fork(owner)
@@ -51,31 +51,22 @@ module GitForks
         urls.each {|u| Launchy.open(u) }
       end
 
-      # Parses the owner arguments.
-      #
-      # @example Parses a set of Fork owners
-      #   parse_owners %w(owner1 owner2 owner3)
-      # @param [Array<String>] owners the list of owners
-      # @return [void]
-      def parse_owners(*owners)
-        self.owners = owners
-      end
-
       def optparse(*argv)
         opts = OptionParser.new do |o|
           o.banner = 'Usage: git forks browse [options] [owner ...]'
           o.separator ''
+          o.separator description
+          o.separator ''
           o.separator 'Example: git forks browse justintoo'
           o.separator ''
-          o.separator description
-          o.separator 'With no owner, the base repository\'s network page is opened.'
+          o.separator 'If no owner is specified, the base repository\'s network page is opened.'
           o.separator ''
 
           common_options(o)
         end
 
         parse_options(opts, argv)
-        parse_owners(*argv)
+        @owners = argv
         argv
       end
     end
