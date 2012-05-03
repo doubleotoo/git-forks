@@ -10,6 +10,7 @@ module GitForks
     class Config
       autoload :Add,          __p('cli/config/add')
       autoload :Get,          __p('cli/config/get')
+      autoload :Help,         __p('cli/config/help')
       autoload :List,         __p('cli/config/list')
       autoload :Remove,       __p('cli/config/remove')
     end

@@ -8,10 +8,11 @@ module GitForks
       self.commands = [
         :add,
         :get,
+        :help,
         :list,
         :remove
       ]
-      self.default_command = :list
+      self.default_command = :help
     end
   end
 end
