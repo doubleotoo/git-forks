@@ -68,11 +68,11 @@ module GitForks
             @cached = true
           end
 
-          o.on('--cached', "List forks in my cache)") do
+          o.on('--cached', "List forks in my cache") do
             @cached = true
           end
 
-          o.on('--config', "List forks in my configuration)") do
+          o.on('--config', "List forks in my configuration") do
             @config = true
           end
 

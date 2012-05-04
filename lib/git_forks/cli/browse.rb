@@ -76,7 +76,9 @@ module GitForks
           o.separator description
           o.separator ''
           o.separator 'Example: git forks browse justintoo'
+          o.separator 'Example: git forks browse justintoo:test-branch'
           o.separator "Example: git forks browse --network"
+          o.separator "Example: git forks browse --network rose-compiler"
           o.separator ''
           o.separator 'If no owner is specified, the base repository\'s network page is opened.'
           o.separator ''

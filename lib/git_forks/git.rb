@@ -1,6 +1,7 @@
 require 'json'
 
 module GitForks
+  # @todo refactor into reusable component
   module Git # Namespace for managing Git repository
     class << self
       def git(command)
@@ -32,6 +33,8 @@ module GitForks
       end
     end # class << self
 
+    # @todo refactor into a reusable component where the underlying
+    #   cache mechanism is transparent, e.g. git-config, file, database
     module Cache # Namespace to manage a Git cache
       class << self
         # Caches +json+ into a top-level JSON +group+
