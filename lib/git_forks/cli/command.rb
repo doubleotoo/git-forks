@@ -14,6 +14,7 @@ module GitForks
     # the option parser
     #
     # @abstract
+    # @todo use OpenStruct for options
     class Command
       # Helper method to run the utility on an instance.
       # @see #run

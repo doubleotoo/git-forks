@@ -75,12 +75,6 @@ module GitForks
           o.separator ''
           o.separator "General options:"
 
-          o.on('--all', "List forks from each source (default)") do
-            @remote = true
-            @config = true
-            @cached = true
-          end
-
           o.on('--cached', "List forks in my cache") do
             @cached = true
           end
@@ -101,6 +95,12 @@ module GitForks
             @remote = true
           end
 
+          o.on('--all', "List forks from each source (default)") do
+            @remote = true
+            @config = true
+            @cached = true
+          end
+
           common_options(o)
         end
 
@@ -111,9 +111,9 @@ module GitForks
           #puts opts
           #abort
           @remote = @config = @cached = true
-        else
-          argv
         end
+
+        argv
       end
     end
   end

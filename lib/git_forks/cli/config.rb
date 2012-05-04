@@ -7,6 +7,7 @@ module GitForks
       self.commands_namespace = CLI::Config
       self.commands = [
         :add,
+        :check,
         :get,
         :help,
         :list,

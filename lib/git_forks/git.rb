@@ -33,6 +33,8 @@ module GitForks
       end
     end # class << self
 
+    # @todo cache file may not exist
+    #
     # @todo refactor into a reusable component where the underlying
     #   cache mechanism is transparent, e.g. git-config, file, database
     module Cache # Namespace to manage a Git cache
