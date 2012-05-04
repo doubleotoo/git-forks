@@ -21,6 +21,7 @@ module GitForks
 
       def description; "Shows a fork's GitHub page in a web browser" end
 
+      # @todo if Github.user: allow specifiers Github.user:<branch|sha>
       def run(*argv)
         optparse(*argv)
 
@@ -47,6 +48,8 @@ module GitForks
                 end
                 urls << url
               end
+            elsif owner == Github.user
+              urls << Github.network_url
             else
               invalid << "#{owner}/#{Github.repo}"
             end

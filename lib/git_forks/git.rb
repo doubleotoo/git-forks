@@ -83,15 +83,22 @@ module GitForks
         # @return [JSON,nil]
         def get_fork(owner)
           forks = get_forks
-          forks.select {|f| f == owner }.first
+          forks.select {|f| f['owner']['login'] == owner }.compact.first
         end
 
         # Gets all cached forks
         #
-        # @return [JSON,nil]
+        # @return [JSON, nil]
         def get_forks
           forks = get_group(:group => 'forks')
-          forks.select {|f| f['owner']['login'] }
+        end
+
+        # Gets all cached forks
+        #
+        # @return [Array<String>, nil]
+        def get_fork_owners
+          forks = get_forks
+          forks.collect {|f| f['owner']['login'] }
         end
 
         private
