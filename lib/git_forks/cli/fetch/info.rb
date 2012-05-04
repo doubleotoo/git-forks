@@ -48,7 +48,7 @@ module GitForks
             owners = forks.collect {|f| f['owner']['login'] }
             if not (dne = targets - owners).empty?
               dne.each do |owner|
-                puts "WARNING: #{owner}/#{Github.repo} does not exist."
+                log.warn "'#{owner}/#{Github.repo}' does not exist in GitHub"
                 # `git forks fetch <dne>` will report <dne>
                 # as not being in the forks whitelist. It is
                 # in the list, but it doesn't exist in GitHub.
