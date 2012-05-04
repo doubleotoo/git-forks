@@ -10,10 +10,15 @@ module GitForks
         #   lexicographic order
         attr_accessor :reverse
 
+        # @return [String] used to delimit components in the list
+        attr_accessor :separator
+        DEFAULT_SEPARATOR = ' '
+
         def initialize
           super
           @count    = false
           @reverse  = false
+          @separator = DEFAULT_SEPARATOR
         end
 
         def description; "List the forks you have configured" end
@@ -23,6 +28,8 @@ module GitForks
           owners = list
           if @count
             owners = owners.size
+          else
+            owners = owners.join(@separator)
           end
           puts owners
           owners
@@ -41,7 +48,11 @@ module GitForks
             o.separator ''
             o.separator description
             o.separator ''
-            o.separator 'Example: git forks config list'
+            o.separator "Example: delimiting with a newline (Bash)"
+            o.separator ''
+            o.separator "         $ git forks config list --separator $'\\n'"
+            o.separator '         justintoo'
+            o.separator '         rose-compiler'
             o.separator ''
             o.separator "General options:"
 
@@ -51,6 +62,10 @@ module GitForks
 
             o.on('-r', '--reverse', 'Sort the list in reverse lexicographic order') do
               @reverse = true
+            end
+
+            o.on('--separator STR', String, "List separator (default: '#{DEFAULT_SEPARATOR}')") do |separator|
+              @separator = separator
             end
 
             common_options(o)

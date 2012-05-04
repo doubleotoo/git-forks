@@ -2,6 +2,7 @@
 require 'octokit'
 
 module GitForks
+  # @todo validate repository on initialization of application
   module Github # Namespace for communicating with the GitHub API v3
     class << self
       #def login
@@ -16,6 +17,11 @@ module GitForks
           c[k] = v
         end
         u = c['remote.origin.url']
+
+        if u.nil?
+          log.error 'Your Git repository has no remote.origin.url'
+          abort
+        end
 
         user, proj = user_and_proj(u)
         if !(user and proj)
@@ -70,9 +76,8 @@ module GitForks
         log.debug "Fetched branches from '#{repo_path}': '#{JSON.pretty_generate(branches)}'"
         branches
       end
-    end
 
-    private
+      private
 
       def insteadof_matching(c, u)
         first = c.collect {|k,v| [v, /url\.(.*github\.com.*)\.insteadof/.match(k)]}.
@@ -82,5 +87,6 @@ module GitForks
         end
         return nil, nil
       end
+    end
   end # Github
 end # GitForks

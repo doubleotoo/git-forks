@@ -19,7 +19,7 @@ module GitForks
         @repo = Github.repo
       end
 
-      def description; "Shows a fork's GitHub page in a web browser" end
+      def description; "Show a fork's GitHub page in a web browser" end
 
       # @todo if Github.user: allow specifiers Github.user:<branch|sha>
       def run(*argv)

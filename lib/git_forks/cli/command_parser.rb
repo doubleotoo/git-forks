@@ -38,7 +38,6 @@ module GitForks
         :help,
         :list,
         :show,
-        :update
       ]
       self.default_command = :help
 
