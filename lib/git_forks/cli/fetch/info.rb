@@ -18,21 +18,24 @@ module GitForks
 
         def run(*argv)
           optparse(*argv)
-          forks = fetch
+          forks = fetch(@cache)
 
-          if @cache
-            Git::Cache.save({:json => forks, :group => 'forks', :file => @cache_file})
-          else
-            puts JSON.pretty_generate(forks)
-          end
+          puts JSON.pretty_generate(forks) if not @cache
         end
 
-        def fetch
+        def fetch(cache = false)
           forks = fetch_forks
 
           forks.each do |f|
             branches = fetch_branches(f)
             f.branches = branches
+          end
+
+          if cache
+            Git::Cache.save({
+              :json => forks,
+              :group => 'forks',
+              :file => @cache_file})
           end
 
           forks
