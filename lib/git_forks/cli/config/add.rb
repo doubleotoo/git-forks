@@ -2,6 +2,7 @@ module GitForks
   module CLI
     class Config
       class Add < Command
+        # @return [String] list of fork owners to add
         attr_accessor :owners
 
         def initialize
@@ -44,13 +45,12 @@ module GitForks
           end
 
           parse_options(opts, argv)
+
           if argv.empty?
             raise CLI::PositionalArgumentMissing, opts
           else
-            @owners = argv
+            @owners = argv.uniq
           end
-
-          argv
         end
       end
     end

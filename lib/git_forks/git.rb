@@ -85,7 +85,7 @@ module GitForks
         # @example Get the fork data belonging to 'justintoo'
         #   fork('justintoo')
         # @param [String] owner
-        # @return [JSON,nil]
+        # @return [String,nil] a JSON string
         def get_fork(owner)
           forks = get_forks
           forks.select {|f| f['owner']['login'] == owner }.compact.first
@@ -93,9 +93,26 @@ module GitForks
 
         # Gets all cached forks
         #
-        # @return [JSON, nil]
-        def get_forks
-          forks = get_group(:group => 'forks')
+        # @param [Array] targets
+        # @return [Array<String>] array of JSON strings
+        def get_forks(targets = [])
+          forks = get_group(:group => 'forks') || []
+          if targets.size > 0
+            h = {} # { owner => fork }
+            forks.each {|f|
+              owner = f['owner']['login']
+              h[owner] = f
+            }
+            forks = []
+            targets.each {|owner|
+              if f = h[owner]
+                forks << f
+              else
+                log.warn "'#{owner}' does not exist in the cache"
+              end
+            }
+          end
+          forks
         end
 
         # Gets all cached forks

@@ -1,6 +1,8 @@
 module GitForks
   module CLI
     class Config
+      # @todo add --prune option to remove config forks that don't
+      #       exist in GitHub (?)
       class Check < Command
         # @return [Boolean] if I should check against GitHub
         attr_accessor :remote
@@ -104,13 +106,12 @@ module GitForks
           end
 
           parse_options(opts, argv)
-          @targets = argv
 
           if not (@remote or @cached)
             @remote = @cached = true
           end
 
-          argv
+          @targets = argv.uniq
         end
       end
     end

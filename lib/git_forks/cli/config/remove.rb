@@ -72,10 +72,8 @@ module GitForks
           if argv.empty? and not @all
             raise CLI::PositionalArgumentMissing, opts
           else
-            @owners = argv
+            @owners = argv.uniq
           end
-
-          argv
         end
       end
     end

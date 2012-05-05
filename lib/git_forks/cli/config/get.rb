@@ -6,17 +6,21 @@ module GitForks
         #   lexicographic order
         attr_accessor :reverse
 
+        # @return [String] list of fork owners to get
+        attr_accessor :owners
+
         def initialize
           super
-          @reverse  = false
+          @reverse = false
+          @owners  = []
         end
 
         def description; "Get a fork by owner name from your configuration" end
 
         def run(*argv)
-          owners = optparse(*argv).sort
-          owners.reverse! if @reverse
-          owners = get(owners)
+          optparse(*argv).sort
+          @owners.reverse! if @reverse
+          owners = get(@owners)
 
           puts owners
           owners
@@ -58,7 +62,7 @@ module GitForks
           parse_options(opts, argv)
           raise CLI::PositionalArgumentMissing, opts if argv.empty?
 
-          argv
+          @owners = argv.uniq
         end
       end
     end

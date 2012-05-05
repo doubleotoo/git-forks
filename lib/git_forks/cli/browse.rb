@@ -92,8 +92,7 @@ module GitForks
         end
 
         parse_options(opts, argv)
-        @owners = argv
-        argv
+        @owners = argv.uniq
       end
     end
   end
