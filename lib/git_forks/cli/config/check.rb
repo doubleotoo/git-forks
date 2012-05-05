@@ -1,7 +1,7 @@
 module GitForks
   module CLI
     class Config
-      # @todo add --prune option to remove config forks that don't
+      # @todo add --purge option to remove config forks that don't
       #       exist in GitHub (?)
       class Check < Command
         # @return [Boolean] if I should check against GitHub

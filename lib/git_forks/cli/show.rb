@@ -21,6 +21,8 @@ module GitForks
         log.backtrace(e) if log.level >= Logger::DEBUG
       end
 
+      # @todo return hash and use 'smart-printing' to indent,
+      #       set column widths, etc.
       def show(targets)
         forks = Git::Cache.get_forks(targets)
         i=0; forks.each do |f|

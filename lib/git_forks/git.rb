@@ -34,6 +34,7 @@ module GitForks
     end # class << self
 
     # @todo cache file may not exist
+    # @todo use object-oriented approach instead of using JSON everywhere
     #
     # @todo refactor into a reusable component where the underlying
     #   cache mechanism is transparent, e.g. git-config, file, database
@@ -94,7 +95,8 @@ module GitForks
         # Gets all cached forks
         #
         # @param [Array] targets
-        # @return [Array<String>] array of JSON strings
+        # @return [Array<String>] sorted array of JSON strings
+        # @todo sort!
         def get_forks(targets = [])
           forks = get_group(:group => 'forks') || []
           if targets.size > 0
@@ -112,12 +114,12 @@ module GitForks
               end
             }
           end
-          forks
+          forks.sort {|a,b| a['owner']['login'] <=> b['owner']['login'] }
         end
 
         # Gets all cached forks
         #
-        # @return [Array<String>, nil]
+        # @return [Array<String>, nil] sorted array of owners
         def get_fork_owners
           forks = get_forks
           forks.collect {|f| f['owner']['login'] }
