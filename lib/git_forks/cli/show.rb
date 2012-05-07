@@ -6,9 +6,14 @@ module GitForks
       # @return [String] optional list of specific forks to check
       attr_accessor :targets
 
+      # @return [Boolean] if I should list all forks even if
+      #   they are not in my cache/configuration
+      attr_accessor :remote
+
       def initialize
         super
         @targets = []
+        @remote = false
       end
 
       def description; "Show fork details" end
@@ -24,7 +29,12 @@ module GitForks
       # @todo return hash and use 'smart-printing' to indent,
       #       set column widths, etc.
       def show(targets)
-        forks = Git::Cache.get_forks(targets)
+        if @remote
+          forks = CLI::Fetch::Info.new.fetch(targets, false)
+        else
+          forks = Git::Cache.get_forks(targets)
+        end
+
         i=0; forks.each do |f|
           puts if i > 0
           puts "Owner    : #{f['owner']['login']}"
@@ -37,8 +47,6 @@ module GitForks
           end
         i +=1
         end
-
-        # if remote; fetch
       end
 
       def optparse(*argv)
@@ -48,6 +56,10 @@ module GitForks
           o.separator description
           o.separator ''
           o.separator "General options:"
+
+          o.on('--remote', "Grab info from GitHub") do
+            @remote = true
+          end
 
           common_options(o)
         end

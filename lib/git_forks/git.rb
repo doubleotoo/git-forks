@@ -5,9 +5,18 @@ module GitForks
   module Git # Namespace for managing Git repository
     class << self
       def git(command)
-        `git #{command}`.chomp
+        command = "git #{command}"
+        log.debug "$ #{command}"
+        `#{command}`.chomp
       end
       alias :run :git
+
+      # @param [String] path is a git repository path
+      # @param [String] dst is a path under .git/refs/
+      # @param [String] src is the remote refs path to fetch
+      def fetch_refs(path, dst, src='refs/heads/*')
+        git("fetch --prune #{path} +#{src}:refs/#{dst}/*")
+      end
 
       # Removes a group of git-refs under +refs/forks/+.
       #

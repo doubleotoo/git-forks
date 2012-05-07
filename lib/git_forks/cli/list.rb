@@ -27,14 +27,14 @@ module GitForks
 
       def description; "List forks of [#{Github.repo_path}]" end
 
-      # @todo should aggregate 'owner' from each source
+      # @todo should alert if outdated
       # @todo owner could be longer than default width... it will be truncated
       # @todo updated_at should be a relative "time ago"
       def run(*argv)
         optparse(*argv)
         forks = list(@remote, @config, @cached)
 
-        output = []
+        output = {}
 
         puts col_source('Source')     +
              col_owner('Owner')       +
@@ -43,12 +43,8 @@ module GitForks
 
         if f = forks[:cached]
           f.each do |f|
-            line = ""
-            line << col_source('cached')
-            line << col_owner(f['owner']['login'])
-            line << col_branches(f['branches'].size)
-            line << col_updated(f['updated_at'])
-            output << line
+            output[f['owner']['login']] ||= []
+            output[f['owner']['login']] << fork_line('cached', f)
           end
         end
 
@@ -59,39 +55,23 @@ module GitForks
             line << col_owner(f)
             line << col_branches('-')
             line << col_updated('-')
-            output << line
+            output[f] ||= []
+            output[f] << line
           end
         end
 
-        # TODO: this is duplicated code
         if f = forks[:remote]
           f.each do |f|
-            line = ""
-            line << col_source('remote')
-            line << col_owner(f['owner']['login'])
-            line << col_branches(f['branches'].size)
-            line << col_updated(f['updated_at'])
-            output << line
+            output[f['owner']['login']] ||= []
+            output[f['owner']['login']] << fork_line('cached', f)
           end
         end
 
-        puts output
-      end
-
-      def col_source(source, width=8)
-        l(source, width)
-      end
-
-      def col_owner(owner, width=25)
-        l(owner, width)
-      end
-
-      def col_branches(branch, width=12)
-        l(branch, width)
-      end
-
-      def col_updated(updated, width=nil)
-        updated
+        output.each do |f, lines|
+          lines.each do |l|
+            puts l
+          end
+        end
       end
 
       # Returns [Hash]
@@ -157,6 +137,33 @@ module GitForks
         end
 
         argv
+      end
+
+    private
+
+      def fork_line(source, f)
+        line = ""
+        line << col_source(source)
+        line << col_owner(f['owner']['login'])
+        line << col_branches(f['branches'].size)
+        line << col_updated(f['updated_at'])
+        line
+      end
+
+      def col_source(source, width=8)
+        l(source, width)
+      end
+
+      def col_owner(owner, width=25)
+        l(owner, width)
+      end
+
+      def col_branches(branch, width=12)
+        l(branch, width)
+      end
+
+      def col_updated(updated, width=nil)
+        updated
       end
     end
   end

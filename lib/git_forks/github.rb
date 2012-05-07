@@ -77,6 +77,10 @@ module GitForks
         branches
       end
 
+      def fetch_refs(owner)
+        Git.fetch_refs("#{endpoint}/#{owner}/#{repo}.git", "forks/#{owner}")
+      end
+
       private
 
       def insteadof_matching(c, u)

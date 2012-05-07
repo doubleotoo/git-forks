@@ -2,55 +2,45 @@ module GitForks
   module CLI
     class Fetch
       class Refs < Command
+        # @return [String] optional list of specific forks to check
+        attr_accessor :targets
+
         def initialize
           super
+          @targets = []
         end
 
-        def description; "Add a fork to your configuration" end
+        def description; "Fetch fork git-ref data from GitHub" end
 
         def run(*argv)
           optparse(*argv)
-          fetch
+          @targets = Git::Cache.get_forks.collect {|f| f['owner']['login']} if @targets.empty?
+          fetch(@targets)
         end
 
-        def fetch
-          puts CLI::Config.run('list')
-          return
-           # targets = config_get_forks # optional fork targets
-           # forks = Octokit.forks("#{@user}/#{@repo}").select {|f|
-           #   targets.empty? or targets.include?(f.owner.login)
-           # }
-
-           # unless targets.empty?
-           #   owners = forks.collect {|f| f['owner']['login'] }
-           #   if not (dne = targets - owners).empty?
-           #     dne.each do |owner|
-           #       puts "WARNING: #{owner}/#{@repo} does not exist."
-           #       # `git forks fetch <dne>` will report <dne>
-           #       # as not being in the forks whitelist. It is
-           #       # in the list, but it doesn't exist in GitHub.
-           #       #
-           #       # Hopefully, this WARNING message will help.
-           #     end
-           #   end
+        def fetch(targets)
+          targets.each do |t|
+            log.info "Fetching GitHub refs for '#{t}'"
+            Github.fetch_refs(t)
+          end
         end
 
         def optparse(*argv)
           reverse = false
           opts = OptionParser.new do |o|
-            o.banner = 'Usage: git forks fetch info [options]'
+            o.banner = 'Usage: git forks fetch refs [options] [owners ...]'
             o.separator ''
             o.separator description
             o.separator ''
-            o.separator 'Example: git forks fetch info'
+            o.separator 'Example: git forks fetch refs'
+            o.separator ''
+            o.separator "General options:"
 
             common_options(o)
           end
 
           parse_options(opts, argv)
-          log.warn "ignoring positional arguments: '#{argv}'" unless argv.empty?
-
-          argv
+          @targets = argv.uniq
         end
       end
     end

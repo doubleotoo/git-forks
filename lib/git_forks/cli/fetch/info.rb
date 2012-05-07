@@ -18,13 +18,13 @@ module GitForks
 
         def run(*argv)
           optparse(*argv)
-          forks = fetch(@cache)
+          forks = fetch(CLI::Config::List.new.list, @cache)
 
           puts JSON.pretty_generate(forks) if not @cache
         end
 
-        def fetch(cache = false)
-          forks = fetch_forks
+        def fetch(targets = CLI::Config::List.new.list, cache = false)
+          forks = fetch_forks(targets)
 
           forks.each do |f|
             branches = fetch_branches(f)
@@ -41,8 +41,8 @@ module GitForks
           forks
         end
 
-        def fetch_forks
-          targets = CLI::Config::List.new.list # optional fork targets
+        # @param [Array<String>] targets optional fork targets
+        def fetch_forks(targets = CLI::Config::List.new.list)
           forks = Github.forks.select {|f|
             targets.empty? or targets.include?(f.owner.login)
           }
@@ -68,7 +68,6 @@ module GitForks
           branches = Github.branches(fork_owner)
         end
 
-        # TODO: option --dry-run: i.e. don't cache
         def optparse(*argv)
           reverse = false
           opts = OptionParser.new do |o|
