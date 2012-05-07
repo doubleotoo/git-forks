@@ -3,6 +3,7 @@ module GitForks
     class Review
       class Create < Command
         require 'grit'
+        require 'github_api'
 
         def initialize
           super
@@ -41,18 +42,102 @@ module GitForks
           body  = "(Automatically generated pull-request.)\n"
           file_reviewers.each {|file, reviewers|
             body << "\n"
-            body << reviewers.collect {|r| "@#{r['github-user']}" }.join(' ')
+            body << reviewers.collect {|r| "@#{r['github-user']}" }.join(' || ')
             body << ": please code review #{file}."
           }
 
+github = ::Github.new(:basic_auth => 'doubleotoo:x')
+
           begin
-            client = Octokit::Client.new(:login => "doubleotoo", :password => "Jatusa1@github")
-            puts client.create_pull_request(repo, base, head, title, body)
+            log.debug "repo='#{repo}'"
+            log.debug "base='#{base}'"
+            log.debug "head='#{head}'"
+            log.debug "title='#{title}'"
+            log.debug "body='#{body}'"
+
+            pull_request = github.pull_requests.create_request(
+                Github.user,
+                Github.repo,
+                'title' => title,
+                'body'  => body,
+                'head'  => head,
+                'base'  => base)
+
             log.info "Created pull request: '#{title}'"
-          rescue Octokit::UnprocessableEntity
+            log.debug "Created pull request: '#{pull_request}'"
+          rescue ::Github::Error::UnprocessableEntity
             log.error "pull request already exists for '#{title}'"
             abort
           end
+
+          #-------------------------------------------------------------------------
+          # Update pull request
+          #
+          # (This extra step is simply a convenience for code reviewers.)
+          #
+          # Update the pull request's description with links to each file's diff-url.
+          # This allows a code-reviewer to simply click the link to jump to the diff.
+          #
+          # Example::
+          #
+          #   Markdown:
+          #     @doubleotoo: please code review \
+          #     [src/README](https://github.com/doubleotoo/foo/pull/40/files#diff-0).
+          #
+          #   Visible HTML:
+          #     @doubleotoo: please code review src/README.
+          #
+          #'
+          # First, we compute the "diff number" (i.e. ../files#diff-<number>) for
+          # each file.
+          #
+          #   Note: This is currently quite hackish. There's no json API that maps
+          #   a file to a diff number. So our best bet is to grab the array of
+          #   pull_request files and then hope that a file's index in the array is
+          #   it's diff number.
+          #     I suppose we could just link to the diff page instead...
+          #
+          #
+          # If this update step fails, the pull_request will have a description,
+          # requesting developers to code review files--there just won't be any
+          # nice HTML links to the diff page.
+          #
+          #-------------------------------------------------------------------------
+          pull_request_file_diff_number = {}
+          i=0; github.pull_requests.files(
+            Github.user,
+            Github.repo,
+            pull_request.number).each_page do |page|
+              page.each do |file|
+                pull_request_file_diff_number[file.filename] = i
+                i += 1
+              end
+            end
+
+          #---------------------------------
+          # Pull request description body
+          #
+          #   + With diff-links for files
+          #---------------------------------
+          body = "(Automatically generated pull-request.)\n"
+          file_reviewers.each {|file, reviewers|
+            diff_number = pull_request_file_diff_number[file]
+            diff_url = "#{pull_request.html_url}/files#diff-#{diff_number}"
+            diff_link = "[#{file}](#{diff_url})" # markdown [name](anchor)
+            log.debug "diff_link='#{diff_link}' for #{file}"
+
+            body << "\n"
+            body << reviewers.collect {|r| "@#{r['github-user']}" }.join(' || ')
+            body << ": please code review #{diff_link}."
+
+            raise "diff_number is nil for #{file}!" if diff_number.nil?
+          }
+
+          github.pull_requests.update_request(Github.user,
+                                              Github.repo,
+                                              pull_request.number,
+                                              'body' => body)
+          log.debug "Updated GitHub::PullRequest with diff-links for files: #{pull_request.to_json}"
         end
 
         # @todo test reviewer == owner

@@ -20,5 +20,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'grit', '~> 2.5'
   s.add_runtime_dependency 'json', '~> 1.7'
   s.add_runtime_dependency 'launchy'
-  s.add_runtime_dependency 'octokit', '= 0.6.5'
+  s.add_runtime_dependency 'github_api', '= 0.4.11'
 end

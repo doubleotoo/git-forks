@@ -1,5 +1,4 @@
-# Octokit is used to access GitHub's API.
-require 'octokit'
+require 'github_api'
 
 module GitForks
   # @todo validate repository on initialization of application
@@ -64,14 +63,18 @@ module GitForks
       end
 
       def forks
-        forks = Octokit.forks(repo_path)
+        forks = Github.repos.forks(user, repo).each_page.collect {|page|
+          page.collect {|branch| branch }
+        }.flatten
         log.debug "Fetched forks from '#{repo_path}': '#{JSON.pretty_generate(forks)}'"
         forks
       end
 
       def branches(fork_owner)
         repo_path = "#{fork_owner}/#{repo}"
-        branches = Octokit.branches(repo_path)
+        branches = Github.repos.branches(fork_owner, repo).each_page.collect {|page|
+          page.collect {|branch| branch }
+        }.flatten
 
         log.debug "Fetched branches from '#{repo_path}': '#{JSON.pretty_generate(branches)}'"
         branches
@@ -255,8 +258,8 @@ module GitForks
           log.debug "Validating GitHub account '#{reviewer}'"
 
           begin
-            Octokit.user(reviewer)
-          rescue Octokit::NotFound
+            ::Github.users.get_user(reviewer)
+          rescue ::Github::Error::NotFound
             log.error "Invalid GitHub user: #{reviewer}"
             abort
           end
