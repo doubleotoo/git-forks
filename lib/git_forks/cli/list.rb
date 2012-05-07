@@ -63,7 +63,7 @@ module GitForks
         if f = forks[:remote]
           f.each do |f|
             output[f['owner']['login']] ||= []
-            output[f['owner']['login']] << fork_line('cached', f)
+            output[f['owner']['login']] << fork_line('remote', f)
           end
         end
 

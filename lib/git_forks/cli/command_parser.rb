@@ -37,6 +37,7 @@ module GitForks
         :fetch,
         :help,
         :list,
+        :review,
         :show,
       ]
       self.default_command = :help

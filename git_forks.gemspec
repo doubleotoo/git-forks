@@ -17,7 +17,8 @@ Gem::Specification.new do |s|
   s.executables = %w( git-forks )
   s.description = "git-forks gets info about a GitHub project's forks."
 
-  s.add_runtime_dependency 'json'
+  s.add_runtime_dependency 'grit', '~> 2.5'
+  s.add_runtime_dependency 'json', '~> 1.7'
   s.add_runtime_dependency 'launchy'
   s.add_runtime_dependency 'octokit', '= 0.6.5'
 end

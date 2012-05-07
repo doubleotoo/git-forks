@@ -1,7 +1,7 @@
 module GitForks
   module CLI
     class Fetch < CommandParser
-      def description; "git-fetch fork data from GitHub (forces cache update)" end
+      def description; "git-fetch fork data from GitHub" end
 
       self.usage = "Usage: git forks fetch <command> [options]"
       self.commands_namespace = CLI::Fetch

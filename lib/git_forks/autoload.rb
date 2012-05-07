@@ -26,6 +26,14 @@ module GitForks
 
     autoload :Help,           __p('cli/help')
     autoload :List,           __p('cli/list')
+
+    autoload :Review,         __p('cli/review')
+    class Review
+      autoload :Create,       __p('cli/review/create')
+      autoload :Poll,         __p('cli/review/poll')
+      autoload :Help,         __p('cli/review/help')
+    end
+
     autoload :Show,           __p('cli/show')
     autoload :Update,         __p('cli/update')
   end

@@ -3,7 +3,7 @@ module GitForks
   module CLI
     # Handles help for commands
     class Help < Command
-      def description; "Retrieves help for a command" end
+      def description; "Retrieve help for a command" end
 
       def run(*argv)
         if argv.first && cmd = CommandParser.get_command(argv.first)

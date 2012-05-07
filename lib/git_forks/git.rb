@@ -2,6 +2,7 @@ require 'json'
 
 module GitForks
   # @todo refactor into reusable component
+  #       use https://github.com/defunkt/hub/blob/master/lib/hub/context.rb
   module Git # Namespace for managing Git repository
     class << self
       def git(command)
@@ -11,11 +12,58 @@ module GitForks
       end
       alias :run :git
 
+      def has_sha(sha)
+        git("show #{sha} 2>&1")
+        $?.exitstatus == 0
+      end
+
+      # @param [String] sha source
+      # @param [String] ref target ref to check against
+      def not_merged?(sha, ref='HEAD')
+        commits = git("rev-list #{sha} ^#{ref} 2>&1")
+        commits.split("\n").size > 0
+      end
+
+      def master_branch
+        'refs/heads/master'
+      end
+
       # @param [String] path is a git repository path
       # @param [String] dst is a path under .git/refs/
       # @param [String] src is the remote refs path to fetch
       def fetch_refs(path, dst, src='refs/heads/*')
         git("fetch --prune #{path} +#{src}:refs/#{dst}/*")
+      end
+
+      def refs(path)
+        refs = []
+
+        refdir = "refs/#{path}"
+        gitdir = ".git/#{refdir}"
+
+        if Dir.exists?(gitdir)
+          Dir.foreach(gitdir) do |ref|
+            next if ref == '.' or ref == '..'
+            refs << git("show-ref #{ref}")
+          end
+        else
+          log.error "'#{gitdir}' does not exist"
+          abort
+        end
+        refs
+      end
+
+      def fork_refs(owner)
+        refs = refs("forks/#{owner}")
+        refs.collect do |r|
+          line = r.split
+          sha = line[0]
+          ref = line[1]
+          {
+            :sha => sha,
+            :ref => ref
+          }
+        end
       end
 
       # Removes a group of git-refs under +refs/forks/+.
