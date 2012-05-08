@@ -119,7 +119,7 @@ module GitForks
                 c_author  = c.user.login
                 c_body    = c.body
 
-                if match = c_body.match(/@(?<user>#{Github.user}).*reviewed (?<file>.+)./)
+                if c_body and match = c_body.match(/@(?<user>#{Github.user}).*reviewed (?<file>[^ ]+)/)
                   user = match['user'].strip
                   file = match['file'].strip
 
@@ -136,7 +136,12 @@ module GitForks
                   # This code reviewer is one of the people in the code review request list.
                   reviewers = file_reviewers[file]
                   if reviewers.nil? or reviewers.empty?
-                    raise "No reviewers for '#{file}' (#{file_reviewers})"
+                    # TODO: don't post multiple times if a comment
+                    #       already exists!
+                    log.debug "No reviewers for '#{file}' (#{file_reviewers}). Unknown file?"
+                    github = ::Github.new(:basic_auth => 'doubleotoo:x') # TODO:
+                    github.issues.create_comment(Github.user, Github.repo, p.number,
+                        "body" => "@#{c_author}: unknown file '#{file}'")
                   else
                     if reviewers.include?(c_author)
                       log.debug "User '#{c_author}' has code reviewed file='#{file}' for " +
