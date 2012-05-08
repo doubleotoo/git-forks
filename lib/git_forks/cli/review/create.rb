@@ -2,14 +2,14 @@ module GitForks
   module CLI
     class Review
       class Create < Command
-        require 'grit'
         require 'github_api'
+        require 'grit'
 
         def initialize
           super
         end
 
-        def description; "TODO:" end
+        def description; "Create GitHub pull requests (runs git-forks-review-poll)" end
 
         def run(*argv)
           optparse(*argv)
@@ -45,7 +45,7 @@ module GitForks
             body << ": please code review #{file}."
           }
 
-          github = ::Github.new(:basic_auth => 'doubleotoo:x')
+          github = ::Github.new(:basic_auth => 'doubleotoo:x') # TODO:
 
           begin
             log.debug "base='#{base}'"
@@ -65,6 +65,9 @@ module GitForks
             log.debug "Created pull request: '#{pull_request}'"
           rescue ::Github::Error::UnprocessableEntity
             log.error "pull request already exists for '#{title}'"
+            abort
+          rescue ::Github::Error::Unauthorized
+            log.error 'Authorization failed. Please check your GitHub credentials.'
             abort
           end
 
@@ -118,7 +121,7 @@ module GitForks
           #   + With diff-links for files
           #---------------------------------
           body = "(Automatically generated pull-request.)\n"
-          file_reviewers.each {|file, reviewers|
+          file_reviewers.each do |file, reviewers|
             diff_number = pull_request_file_diff_number[file]
             diff_url = "#{pull_request.html_url}/files#diff-#{diff_number}"
             diff_link = "[#{file}](#{diff_url})" # markdown [name](anchor)
@@ -129,14 +132,21 @@ module GitForks
             body << ": please code review #{diff_link}."
 
             raise "diff_number is nil for #{file}!" if diff_number.nil?
-          }
+          end
 
-          github.pull_requests.update_request(Github.user,
-                                              Github.repo,
-                                              pull_request.number,
-                                              'body' => body)
+          begin
+            github.pull_requests.update_request(
+                Github.user,
+                Github.repo,
+                pull_request.number,
+                'body' => body
+            )
+          rescue ::Github::Error::Unauthorized
+            log.error 'Authorization failed. Please check your GitHub credentials.'
+            abort
+          end
           log.debug "Updated GitHub::PullRequest with diff-links for files: #{pull_request.to_json}"
-        end
+        end # create_pull_request
 
         # @todo test reviewer == owner
         def reviewers(sha, owner)

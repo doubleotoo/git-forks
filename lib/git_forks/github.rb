@@ -61,18 +61,22 @@ module GitForks
       end
 
       def forks
-        forks = Github.repos.forks(user, repo).each_page.collect {|page|
-          page.collect {|branch| branch }
-        }.flatten
+        forks = []
+        ::Github.repos.forks(user, repo).each_page {|page|
+          forks << page.collect {|branch| branch }
+        }
+        forks.flatten!
         log.debug "Fetched forks from '#{repo_path}': '#{JSON.pretty_generate(forks)}'"
         forks
       end
 
       def branches(fork_owner)
         repo_path = "#{fork_owner}/#{repo}"
-        branches = Github.repos.branches(fork_owner, repo).each_page.collect {|page|
-          page.collect {|branch| branch }
-        }.flatten
+        branches = []
+        ::Github.repos.branches(fork_owner, repo).each_page {|page|
+          branches << page.collect {|branch| branch }
+        }
+        branches.flatten!
 
         log.debug "Fetched branches from '#{repo_path}': '#{JSON.pretty_generate(branches)}'"
         branches

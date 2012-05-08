@@ -81,12 +81,6 @@ module GitForks
             o.separator ''
             o.separator description
             o.separator ''
-            o.separator "Example: delimiting with a newline (Bash)"
-            o.separator ''
-            o.separator "         $ git forks config list --separator $'\\n'"
-            o.separator '         justintoo'
-            o.separator '         rose-compiler'
-            o.separator ''
             o.separator "General options:"
 
             o.on('-c', '--cached', 'Check against my cache') do
