@@ -90,11 +90,11 @@ module GitForks
       end
     end # class << self
 
-    # @todo cache file may not exist
-    # @todo use object-oriented approach instead of using JSON everywhere
+    # @todo cache file may not exist.
+    # @todo use object-oriented approach instead of using JSON everywhere.
     #
     # @todo refactor into a reusable component where the underlying
-    #   cache mechanism is transparent, e.g. git-config, file, database
+    #   cache mechanism is transparent, e.g. git-config, file, database.
     module Cache # Namespace to manage a Git cache
       class << self
         # Caches +json+ into a top-level JSON +group+

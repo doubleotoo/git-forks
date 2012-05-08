@@ -35,6 +35,41 @@ module GitForks
           end
         end
 
+        # @todo refactor
+        # @todo document
+        #-------------------------------------------------------------------------
+        # Update pull request
+        #
+        # (This extra step is simply a convenience for code reviewers.)
+        #
+        # Update the pull request's description with links to each file's diff-url.
+        # This allows a code-reviewer to simply click the link to jump to the diff.
+        #
+        # Example::
+        #
+        #   Markdown:
+        #     @doubleotoo: please code review \
+        #     [src/README](https://github.com/doubleotoo/foo/pull/40/files#diff-0).
+        #
+        #   Visible HTML:
+        #     @doubleotoo: please code review src/README.
+        #
+        #
+        # First, we compute the "diff number" (i.e. ../files#diff-<number>) for
+        # each file.
+        #
+        #   Note: This is currently quite hackish. There's no json API that maps
+        #   a file to a diff number. So our best bet is to grab the array of
+        #   pull_request files and then hope that a file's index in the array is
+        #   it's diff number.
+        #     I suppose we could just link to the diff page instead...
+        #
+        #
+        # If this update step fails, the pull_request will have a description,
+        # requesting developers to code review files--there just won't be any
+        # nice HTML links to the diff page.
+        #
+        #-------------------------------------------------------------------------
         def create_pull_request(owner, branch, sha, file_reviewers, base = 'master')
           head  = "#{owner}:#{sha}"
           title = "Merge #{owner}:#{branch} (#{sha[0,8]})"
@@ -64,46 +99,17 @@ module GitForks
             log.info "Created pull request: '#{title}'"
             log.debug "Created pull request: '#{pull_request}'"
           rescue ::Github::Error::UnprocessableEntity
-            log.error "pull request already exists for '#{title}'"
-            abort
+            log.warn "pull request already exists for '#{title}'"
+            return
           rescue ::Github::Error::Unauthorized
             log.error 'Authorization failed. Please check your GitHub credentials.'
             abort
           end
 
-          #-------------------------------------------------------------------------
-          # Update pull request
-          #
-          # (This extra step is simply a convenience for code reviewers.)
-          #
-          # Update the pull request's description with links to each file's diff-url.
-          # This allows a code-reviewer to simply click the link to jump to the diff.
-          #
-          # Example::
-          #
-          #   Markdown:
-          #     @doubleotoo: please code review \
-          #     [src/README](https://github.com/doubleotoo/foo/pull/40/files#diff-0).
-          #
-          #   Visible HTML:
-          #     @doubleotoo: please code review src/README.
-          #
-          #'
-          # First, we compute the "diff number" (i.e. ../files#diff-<number>) for
-          # each file.
-          #
-          #   Note: This is currently quite hackish. There's no json API that maps
-          #   a file to a diff number. So our best bet is to grab the array of
-          #   pull_request files and then hope that a file's index in the array is
-          #   it's diff number.
-          #     I suppose we could just link to the diff page instead...
-          #
-          #
-          # If this update step fails, the pull_request will have a description,
-          # requesting developers to code review files--there just won't be any
-          # nice HTML links to the diff page.
-          #
-          #-------------------------------------------------------------------------
+          #---------------------------------------------------------------------
+          # UPDATE
+          #---------------------------------------------------------------------
+
           pull_request_file_diff_number = {}
           i=0; github.pull_requests.files(
             Github.user,
