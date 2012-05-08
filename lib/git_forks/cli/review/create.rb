@@ -29,14 +29,13 @@ module GitForks
                   "[into: #{base_user}/#{Github.repo}:#{base_branch}]"
 
                   file_reviewers = reviewers(sha, owner)
-                  pull_request(owner, branch, sha, file_reviewers)
+                  create_pull_request(owner, branch, sha, file_reviewers)
               end
             end
           end
         end
 
-        def pull_request(owner, branch, sha, file_reviewers, base = 'master')
-          repo  = Github.repo_path
+        def create_pull_request(owner, branch, sha, file_reviewers, base = 'master')
           head  = "#{owner}:#{sha}"
           title = "Merge #{owner}:#{branch} (#{sha[0,8]})"
           body  = "(Automatically generated pull-request.)\n"
@@ -46,10 +45,9 @@ module GitForks
             body << ": please code review #{file}."
           }
 
-github = ::Github.new(:basic_auth => 'doubleotoo:x')
+          github = ::Github.new(:basic_auth => 'doubleotoo:x')
 
           begin
-            log.debug "repo='#{repo}'"
             log.debug "base='#{base}'"
             log.debug "head='#{head}'"
             log.debug "title='#{title}'"

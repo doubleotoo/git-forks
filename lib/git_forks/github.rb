@@ -4,9 +4,7 @@ module GitForks
   # @todo validate repository on initialization of application
   module Github # Namespace for communicating with the GitHub API v3
     class << self
-      #def login
-      #  Git.run("config --get-all github.user")
-      #end
+      attr_accessor :user, :repo
 
       def repo_info
         c = {}
@@ -36,8 +34,8 @@ module GitForks
         }
       end
 
-      def user; repo_info[:user] end
-      def repo; repo_info[:name] end
+      def user; @user ||= repo_info[:user] end
+      def repo; @repo ||= repo_info[:name] end
       def repo_path; "#{user}/#{repo}" end
 
       def user_and_proj(u)
