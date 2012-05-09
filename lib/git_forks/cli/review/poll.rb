@@ -14,10 +14,18 @@ module GitForks
 
         def description; "Poll GitHub repositories for new/updated branches (fetches git-refs)" end
 
+        # @reviewed format:
+        #
+        #   <base_user>/<repo> #<pull-request-number>
+        #
+        #
         def run(*argv)
           optparse(*argv)
           if @reviewed
-            get_reviewed_pull_requests
+            reviewed = get_reviewed_pull_requests
+            reviewed.each do |p|
+              puts "#{Github.repo_path} ##{p.number}"
+            end
           else
             @targets = Git::Cache.get_forks.collect {|f| f['owner']['login']} if @targets.empty?
             forks = poll(@targets)
@@ -75,8 +83,10 @@ module GitForks
         #                          track in some other data store.
         #
         def get_reviewed_pull_requests(github = ::Github.new)
+          reviewed = []
+
           pulls = github.pull_requests.requests(Github.user, Github.repo)
-          pulls.reverse.each do |p|
+          pulls.reverse_each do |p|
             log.debug "Checking if pull request " +
               "'#{Github.user}/#{Github.repo}##{p.number}' " +
               "has been code reviewed."
@@ -139,7 +149,7 @@ module GitForks
                     # TODO: don't post multiple times if a comment
                     #       already exists!
                     log.debug "No reviewers for '#{file}' (#{file_reviewers}). Unknown file?"
-                    github = ::Github.new(:basic_auth => 'doubleotoo:x') # TODO:
+                    github = ::Github.new(:basic_auth => Github.basic_auth)
                     github.issues.create_comment(Github.user, Github.repo, p.number,
                         "body" => "@#{c_author}: unknown file '#{file}'")
                   else
@@ -165,6 +175,7 @@ module GitForks
               log.debug "Pull request " +
                 "'#{Github.user}/#{Github.repo}##{p.number}' " +
                 "has been code reviewed. Ready for testing!"
+              reviewed << p
             else
               log.debug "Pull request " +
                 "'#{Github.user}/#{Github.repo}##{p.number}' " +
@@ -176,7 +187,8 @@ module GitForks
                     "still requires '#{reviewers}' to code review file='#{file}'"
                 end
             end
-          end
+          end # pulls.reverse_each
+          reviewed
         end # get_reviewed_pull_requests
 
         def optparse(*argv)

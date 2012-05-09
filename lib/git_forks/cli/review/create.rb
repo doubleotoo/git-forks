@@ -2,7 +2,6 @@ module GitForks
   module CLI
     class Review
       class Create < Command
-        require 'github_api'
         require 'grit'
 
         def initialize
@@ -80,7 +79,7 @@ module GitForks
             body << ": please code review #{file}."
           }
 
-          github = ::Github.new(:basic_auth => 'doubleotoo:x') # TODO:
+          github = ::Github.new(:basic_auth => Github.basic_auth)
 
           begin
             log.debug "base='#{base}'"

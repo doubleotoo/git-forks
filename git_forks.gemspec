@@ -18,6 +18,7 @@ Gem::Specification.new do |s|
   s.description = "git-forks gets info about a GitHub project's forks."
 
   s.add_runtime_dependency 'grit', '~> 2.5'
+  s.add_runtime_dependency 'highline', '~> 1.6'
   s.add_runtime_dependency 'json', '~> 1.7'
   s.add_runtime_dependency 'launchy'
   s.add_runtime_dependency 'github_api', '= 0.4.11'

@@ -1,4 +1,5 @@
 require 'github_api'
+require 'highline/import'
 
 module GitForks
   # @todo validate repository on initialization of application
@@ -37,6 +38,12 @@ module GitForks
       def user; @user ||= repo_info[:user] end
       def repo; @repo ||= repo_info[:name] end
       def repo_path; "#{user}/#{repo}" end
+
+      def basic_auth
+        username = ask("Enter username:  ") { |x| x.default = ENV['USER']; x.echo = true }
+        password = ask("Enter password:  ") { |x| x.echo = "*" } #assign false to echo nothing
+        "#{username}:#{password}"
+      end
 
       def user_and_proj(u)
         # Trouble getting optional ".git" at end to work, so put that logic below
