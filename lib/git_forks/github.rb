@@ -5,7 +5,7 @@ module GitForks
   # @todo validate repository on initialization of application
   module Github # Namespace for communicating with the GitHub API v3
     class << self
-      attr_accessor :user, :repo
+      attr_accessor :user, :repo, :user_cache, :password_cache
 
       def repo_info
         c = {}
@@ -40,8 +40,14 @@ module GitForks
       def repo_path; "#{user}/#{repo}" end
 
       def basic_auth
-        username = ask("Enter username:  ") { |x| x.default = ENV['USER']; x.echo = true }
-        password = ask("Enter password:  ") { |x| x.echo = "*" } #assign false to echo nothing
+        username = self.user_cache = ask("Enter username:  ") do |x|
+          x.default = self.user_cache
+          x.echo = true
+        end
+
+        password = self.password_cache[username] ||=
+          ask("Enter password:  ") { |x| x.echo = "*" }
+
         "#{username}:#{password}"
       end
 
@@ -286,5 +292,7 @@ module GitForks
         return nil, nil
       end
     end
+    self.user_cache = ENV['USER']
+    self.password_cache = {} # in-memory cache
   end # Github
 end # GitForks
