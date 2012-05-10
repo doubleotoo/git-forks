@@ -14,17 +14,12 @@ module GitForks
 
         def description; "Poll GitHub repositories for new/updated branches (fetches git-refs)" end
 
-        # @reviewed format:
-        #
-        #   <base_user>/<repo> #<pull-request-number>
-        #
-        #
         def run(*argv)
           optparse(*argv)
           if @reviewed
             reviewed = get_reviewed_pull_requests
             reviewed.each do |p|
-              puts "#{Github.repo_path} ##{p.number}"
+              puts "#{Github.repo_path} #{p.head.repo.owner.login}/#{p.base.repo.name} ##{p.number}"
             end
           else
             @targets = Git::Cache.get_forks.collect {|f| f['owner']['login']} if @targets.empty?
@@ -191,6 +186,8 @@ module GitForks
           reviewed
         end # get_reviewed_pull_requests
 
+        # @todo add --reverse option
+        #   Currently, --reviewed lists by creation date--we may want to have more control
         def optparse(*argv)
           reverse = false
           opts = OptionParser.new do |o|
@@ -198,11 +195,19 @@ module GitForks
             o.separator ''
             o.separator description
             o.separator ''
-            o.separator 'Example: git forks review poll'
+            o.separator 'Example: list updated forks'
+            o.separator ''
+            o.separator '  $ git forks review poll'
+            o.separator '  <head_user>:<sha[0,8]> (<refs/forks/<head_user>/<branch>)'
+            o.separator ''
+            o.separator 'Example: list code reviewed pull requests'
+            o.separator ''
+            o.separator '  $ git forks review poll --reviewed'
+            o.separator '  <base_user>/<base_repo> <head_user>/<head_repo> #<issue_number>'
             o.separator ''
             o.separator "General options:"
 
-            o.on('--reviewed', 'Poll pull requests that are fully reviewed') do
+            o.on('--reviewed', 'List pull requests that are code reviewed') do
               @reviewed = true
             end
 

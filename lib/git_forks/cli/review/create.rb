@@ -13,10 +13,17 @@ module GitForks
         def run(*argv)
           optparse(*argv)
           forks = CLI::Review::Poll.new.poll
-          create(forks, 'doubleotoo', 'master')
+          create(forks, 'doubleotoo', 'master').each do |p|
+            puts "Created pull request ##{p.number}: " +
+                 "#{p.head.repo.owner.login}/#{p.base.repo.name} -> " +
+                 "#{Github.repo_path}"
+          end
         end
 
+        # @todo: no files modified => no reviewers => test without review
+        #   Should we, instead. request any top-level admin to review?
         def create(forks, base_user, base_branch)
+          pull_requests = []
           forks.each do |f|
             owner = f['owner']['login']
             if new_refs = f['new-refs']
@@ -28,10 +35,11 @@ module GitForks
                   "[into: #{base_user}/#{Github.repo}:#{base_branch}]"
 
                   file_reviewers = reviewers(sha, owner)
-                  create_pull_request(owner, branch, sha, file_reviewers)
+                  pull_requests << create_pull_request(owner, branch, sha, file_reviewers)
               end
             end
           end
+          pull_requests.compact
         end
 
         # @todo refactor
@@ -67,6 +75,8 @@ module GitForks
         # If this update step fails, the pull_request will have a description,
         # requesting developers to code review files--there just won't be any
         # nice HTML links to the diff page.
+        #
+        # @return [Github::PullRequest,nil]
         #
         #-------------------------------------------------------------------------
         def create_pull_request(owner, branch, sha, file_reviewers, base = 'master')
@@ -151,6 +161,7 @@ module GitForks
             abort
           end
           log.debug "Updated GitHub::PullRequest with diff-links for files: #{pull_request.to_json}"
+          pull_request
         end # create_pull_request
 
         # @todo test reviewer == owner
